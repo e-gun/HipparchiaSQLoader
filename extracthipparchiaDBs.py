@@ -144,6 +144,7 @@ def archiveallworks(location, workstructure, cursor):
 	count = 0
 	
 	for a in authors:
+		# a more interesting query could output things like 5th c prose
 		q = 'SELECT universalid FROM works WHERE universalid LIKE %s ORDER BY universalid'
 		d = (a[0]+'%',)
 		cursor.execute(q,d)
@@ -155,8 +156,8 @@ def archiveallworks(location, workstructure, cursor):
 	
 		for w in works:
 			count += 1
-			if count % 100 == 0:
-				print(count,'works archived')
+			if count % 250 == 0:
+				print(str(count),'of'+str(len(works))+'databases extracted')
 			if not os.path.exists(langdir+a[0]+'/'):
 				os.makedirs(langdir+a[0]+'/')
 			dbloc = langdir+a[0]+'/'

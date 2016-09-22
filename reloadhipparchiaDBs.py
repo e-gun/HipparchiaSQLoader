@@ -76,7 +76,6 @@ def reloadwhoeldb(dbcontents, cursor):
 	structure = dbcontents['structure']
 	data = dbcontents['data']
 
-	print('reloading',dbname)
 	for line in data:
 		reloadoneline(line, dbname, structure, cursor)
 	
@@ -162,7 +161,12 @@ def recursivereload(datadir, cursor):
 
 	dbs = buildfilesearchlist(datadir,[])
 	
+	count = 0
 	for db in dbs:
+		count += 1
+		if count % 250 == 0:
+			print(str(count),'of',str(len(dbs)),'databases restored')
+		
 		dbcontents = retrievedb(db.path)
 		
 		if dbcontents['dbname'] in structuremap:
@@ -174,5 +178,15 @@ def recursivereload(datadir, cursor):
 	
 	return
 
+
+# everything
 recursivereload(datadir, cursor)
 
+# support only
+# recursivereload(datadir+'/supportdbs/', cursor)
+
+# gk only
+# recursivereload(datadir+'/workdbs/greekauthors/', cursor)
+
+# lt only
+# recursivereload(datadir+'/workdbs/latinauthors/', cursor)

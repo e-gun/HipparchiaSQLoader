@@ -19,7 +19,7 @@ strauthors = [
 
 strworks = [
 	('universalid', 'character(10)'),
-	('title', 'character varying(256)'),
+	('title', 'character varying(512)'),
 	('language', 'character varying(10)'),
 	('publication_info', 'text'),
 	('levellabels_00', 'character varying(64)'),
