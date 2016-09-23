@@ -157,7 +157,7 @@ def archiveallworks(location, workstructure, cursor):
 		for w in works:
 			count += 1
 			if count % 250 == 0:
-				print(str(count),'of'+str(len(works))+'databases extracted')
+				print(str(count)+' databases extracted')
 			if not os.path.exists(langdir+a[0]+'/'):
 				os.makedirs(langdir+a[0]+'/')
 			dbloc = langdir+a[0]+'/'

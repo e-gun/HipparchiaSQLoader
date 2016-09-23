@@ -76,7 +76,11 @@ def reloadwhoeldb(dbcontents, cursor):
 	structure = dbcontents['structure']
 	data = dbcontents['data']
 
+	count = 0
 	for line in data:
+		count += 1
+		if count % 20000 == 0:
+			dbconnection.commit()
 		reloadoneline(line, dbname, structure, cursor)
 	
 	dbconnection.commit()
