@@ -81,6 +81,7 @@ def reloadwhoeldb(dbcontents, cursor):
 		count += 1
 		if count % 20000 == 0:
 			dbconnection.commit()
+			print('largedb:',dbname,'\n\tcommitting at',count)
 		reloadoneline(line, dbname, structure, cursor)
 	
 	dbconnection.commit()
