@@ -49,7 +49,6 @@ def pickleprep(dbname, dbstructurelist, dbcontents):
 	pickleddb['structure'] = dbstructurelist
 	pickleddb['data'] = dbcontents
 	
-	
 	return pickleddb
 
 
@@ -163,7 +162,8 @@ def archiveallworks(location, workstructure, concstructure, cursor):
 			dbloc = langdir+a[0]+'/'
 			archivesinglework(w[0], workstructure, dbloc, cursor)
 			archivesinglework(w[0]+'_conc', concstructure, dbloc, cursor)
-	
+			dbconnection.commit()
+			
 	return
 
 archivesupportdbs(datadir,cursor)
