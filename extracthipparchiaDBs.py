@@ -101,7 +101,7 @@ def archivesupportdbs(location,cursor):
 	return
 
 
-def archivesinglework(db, workstructure, location, cursor):
+def archivesinglework(db, structure, location, cursor):
 	"""
 	pickle and save a single work
 	:param location:
@@ -112,14 +112,14 @@ def archivesinglework(db, workstructure, location, cursor):
 	suffix = '.pickle.gz'
 	# suffix = '.pickle'
 	
-	dbcontents = fetchit(db, workstructure, cursor)
-	pickleddb = pickleprep(db, workstructure, dbcontents)
+	dbcontents = fetchit(db, structure, cursor)
+	pickleddb = pickleprep(db, structure, dbcontents)
 	storeit(location + db + suffix, pickleddb)
 	
 	return
 
 
-def archiveallworks(location, workstructure, cursor):
+def archiveallworks(location, workstructure, concstructure, cursor):
 	"""
 	search for the lot of them and then do it
 	:param location:
@@ -162,8 +162,9 @@ def archiveallworks(location, workstructure, cursor):
 				os.makedirs(langdir+a[0]+'/')
 			dbloc = langdir+a[0]+'/'
 			archivesinglework(w[0], workstructure, dbloc, cursor)
+			archivesinglework(w[0]+'_conc', concstructure, dbloc, cursor)
 	
 	return
 
 archivesupportdbs(datadir,cursor)
-archiveallworks(datadir, strindividual_work, cursor)
+archiveallworks(datadir, strindividual_work, strindividual_conc, cursor)

@@ -49,6 +49,12 @@ strindividual_work = [
 	('annotations', 'character varying(256)')
 ]
 
+strindividual_conc = [
+	('word', 'character varying(128)'),
+	('stripped_word', 'character varying(128)'),
+	('loci', 'text')
+]
+
 #
 # dictionaries, etc
 #

@@ -62,8 +62,11 @@ def resetdb(dbname, structuremap, cursor):
 	query = 'GRANT SELECT ON TABLE ' + dbname + ' TO hippa_rd;'
 	cursor.execute(query)
 	
+	if '_conc' in dbname:
+		query = 'CREATE INDEX '+dbname+'_word_idx ON public.'+dbname+' USING btree (word COLLATE pg_catalog."default");'
+		cursor.execute(query)
+		
 	return
-
 
 def reloadwhoeldb(dbcontents, cursor):
 	"""
@@ -163,6 +166,7 @@ def recursivereload(datadir, cursor):
 		}
 	
 	workfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d')
+	concfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d_conc')
 
 	dbs = buildfilesearchlist(datadir,[])
 	
@@ -178,7 +182,9 @@ def recursivereload(datadir, cursor):
 			resetdb(dbcontents['dbname'], structuremap[dbcontents['dbname']], cursor)
 		elif re.search(workfinder,dbcontents['dbname']):
 			resetdb(dbcontents['dbname'], strindividual_work, cursor)
-		
+		elif re.search(concfinder, dbcontents['dbname']):
+			resetdb(dbcontents['dbname'], strindividual_conc, cursor)
+
 		reloadwhoeldb(dbcontents, cursor)
 	
 	return
