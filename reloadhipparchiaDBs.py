@@ -85,7 +85,7 @@ def reloadwhoeldb(dbcontents, cursor):
 		# 32k is the limit?
 		if count % 25000 == 0:
 			dbconnection.commit()
-			print('largedb:',dbname,'\n\tcommitting at',count)
+			print(dbname,'[',count,']')
 		reloadoneline(line, dbname, structure, cursor)
 	
 	dbconnection.commit()
@@ -166,8 +166,8 @@ def recursivereload(datadir, cursor):
 		'latin_morphology': strlatin_morphology
 		}
 	
-	workfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d')
-	concfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d_conc')
+	workfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d$')
+	concfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d_conc$')
 
 	dbs = buildfilesearchlist(datadir,[])
 	
