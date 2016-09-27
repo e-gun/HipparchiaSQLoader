@@ -57,14 +57,14 @@ def resetdb(dbname, structuremap, cursor):
 		else:
 			query += column[0] + ' ' + column[1] + ', '
 	query = query[:-2] + ') WITH ( OIDS=FALSE );'
+	
+	if '_conc' in dbname:
+		query += ' CREATE INDEX '+dbname+'_word_idx ON public.'+dbname+' USING btree (word COLLATE pg_catalog."default");'
+		
 	cursor.execute(query)
 	
 	query = 'GRANT SELECT ON TABLE ' + dbname + ' TO hippa_rd;'
 	cursor.execute(query)
-	
-	if '_conc' in dbname:
-		query = 'CREATE INDEX '+dbname+'_word_idx ON public.'+dbname+' USING btree (word COLLATE pg_catalog."default");'
-		cursor.execute(query)
 		
 	return
 
