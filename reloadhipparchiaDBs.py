@@ -83,7 +83,7 @@ def reloadwhoeldb(dbcontents, cursor):
 	for line in data:
 		count += 1
 		# 32k is the limit?
-		if count % 30000 == 0:
+		if count % 25000 == 0:
 			dbconnection.commit()
 			print('largedb:',dbname,'\n\tcommitting at',count)
 		reloadoneline(line, dbname, structure, cursor)

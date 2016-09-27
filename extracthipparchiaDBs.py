@@ -154,7 +154,7 @@ def archiveallworks(location, workstructure, concstructure, cursor):
 			langdir = location + intermediatedir + 'latinauthors/'
 	
 		for w in works:
-			count += 1
+			count += 2
 			if count % 250 == 0:
 				print(str(count)+' databases extracted')
 			if not os.path.exists(langdir+a[0]+'/'):
@@ -163,7 +163,7 @@ def archiveallworks(location, workstructure, concstructure, cursor):
 			archivesinglework(w[0], workstructure, dbloc, cursor)
 			archivesinglework(w[0]+'_conc', concstructure, dbloc, cursor)
 			dbconnection.commit()
-			
+
 	return
 
 archivesupportdbs(datadir,cursor)
