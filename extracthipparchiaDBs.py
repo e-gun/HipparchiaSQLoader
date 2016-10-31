@@ -118,7 +118,7 @@ def archivesinglework(db, structure, location, cursor):
 	return
 
 
-def archiveallworks(location, workstructure, concstructure, cursor):
+def archiveallworks(location, workstructure, cursor):
 	"""
 	search for the lot of them and then do it
 	:param location:
@@ -161,10 +161,9 @@ def archiveallworks(location, workstructure, concstructure, cursor):
 				os.makedirs(langdir+a[0]+'/')
 			dbloc = langdir+a[0]+'/'
 			archivesinglework(w[0], workstructure, dbloc, cursor)
-			archivesinglework(w[0]+'_conc', concstructure, dbloc, cursor)
 			dbconnection.commit()
 
 	return
 
 archivesupportdbs(datadir,cursor)
-archiveallworks(datadir, strindividual_work, strindividual_conc, cursor)
+archiveallworks(datadir, strindividual_work, cursor)

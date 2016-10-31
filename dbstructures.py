@@ -32,6 +32,8 @@ strworks = [
 	('transmission', 'character varying(32)'),
 	('worktype', 'character varying(32)'),
 	('wordcount', 'integer'),
+	('firstline', 'integer'),
+	('lastline', 'integer'),
 	('authentic', 'boolean')
 ]
 
@@ -44,6 +46,7 @@ strindividual_work = [
 	('level_01_value', 'character varying(64)'),
 	('level_00_value', 'character varying(64)'),
 	('marked_up_line', 'text'),
+	('accented_line', 'text'),
 	('stripped_line', 'text'),
 	('hyphenated_words', 'character varying(128)'),
 	('annotations', 'character varying(256)')
