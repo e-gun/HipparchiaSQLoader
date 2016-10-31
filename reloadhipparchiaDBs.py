@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 #!../bin/python
-import psycopg2
-import configparser
 import pickle
 import gzip
-import time
 import os
 import re
 from dbhelpers import *
+from multiprocessing import Process, Manager
+from mpclass import MPCounter
+
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -57,15 +57,22 @@ def resetdb(dbname, structuremap, cursor):
 		else:
 			query += column[0] + ' ' + column[1] + ', '
 	query = query[:-2] + ') WITH ( OIDS=FALSE );'
-	
-	if '_conc' in dbname:
-		query += ' CREATE INDEX '+dbname+'_word_idx ON public.'+dbname+' USING btree (word COLLATE pg_catalog."default");'
-		
 	cursor.execute(query)
+	dbconnection.commit()
+	
+	if re.search(r'(gr|lt)\d\d\d\d',dbname) is not None:
+		query = 'DROP INDEX IF EXISTS public.'+dbname+'_mu_trgm_idx'
+		cursor.execute(query)
+		dbconnection.commit()
+		
+		query = 'DROP INDEX IF EXISTS public.'+dbname+'_st_trgm_idx'
+		cursor.execute(query)
+		dbconnection.commit()
 	
 	query = 'GRANT SELECT ON TABLE ' + dbname + ' TO hippa_rd;'
 	cursor.execute(query)
-		
+	dbconnection.commit()
+	
 	return
 
 def reloadwhoeldb(dbcontents, cursor):
@@ -83,9 +90,9 @@ def reloadwhoeldb(dbcontents, cursor):
 	for line in data:
 		count += 1
 		# 32k is the limit?
-		if count % 25000 == 0:
+		if count % 20000 == 0:
 			dbconnection.commit()
-			print(dbname,'[',count,']')
+			print('\t\tlongdb: ',dbname,'[ @ line ',count,']')
 		reloadoneline(line, dbname, structure, cursor)
 	
 	dbconnection.commit()
@@ -146,13 +153,16 @@ def buildfilesearchlist(datadir, memory):
 		if re.search(pickles,m.path):
 			entries.append(m)
 	
-	return entries
+	paths = []
+	for e in entries:
+		paths.append(e.path)
+	
+	return paths
 
 
-def recursivereload(datadir, cursor):
+def recursivereload(datadir):
 	"""
 	aim me at a directory and I will unpack all of the pickles and put them in the db
-	:param cursor:
 	:return:
 	"""
 	structuremap = {
@@ -166,39 +176,78 @@ def recursivereload(datadir, cursor):
 		'latin_morphology': strlatin_morphology
 		}
 	
-	workfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d$')
-	concfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d_conc$')
-
-	dbs = buildfilesearchlist(datadir,[])
+	print('scanning the filesystem')
+	dbpaths = buildfilesearchlist(datadir,[])
+	totaldbs = len(dbpaths)
 	
-	count = 0
-	for db in dbs:
-		count += 1
-		if count % 250 == 0:
-			print(str(count),'of',str(len(dbs)),'databases restored')
-		
-		dbcontents = retrievedb(db.path)
-		
-		if dbcontents['dbname'] in structuremap:
-			resetdb(dbcontents['dbname'], structuremap[dbcontents['dbname']], cursor)
-		elif re.search(workfinder,dbcontents['dbname']):
-			resetdb(dbcontents['dbname'], strindividual_work, cursor)
-		elif re.search(concfinder, dbcontents['dbname']):
-			resetdb(dbcontents['dbname'], strindividual_conc, cursor)
-
-		reloadwhoeldb(dbcontents, cursor)
+	print('beginning to reload the databases:',totaldbs,'found')
+	manager = Manager()
+	count = MPCounter()
+	dbs = manager.list(dbpaths)
+	workers = int(config['io']['workers'])
+	
+	jobs = [Process(target=mpreloader, args=(dbs, count, totaldbs, structuremap)) for i in
+	        range(workers)]
+	
+	for j in jobs: j.start()
+	for j in jobs: j.join()
 	
 	return
 
+def mpreloader(dbs, count, totaldbs, structuremap):
+	"""
+	mp reader reloader
+	:return:
+	"""
+	workfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d$')
+	
+	dbc = setconnection(config)
+	cur = dbc.cursor()
+
+	while len(dbs) > 0:
+		try:
+			db = dbs.pop()
+			dbcontents = retrievedb(db)
+		except:
+			dbcontents = {}
+			dbcontents['dbname'] = ''
+		
+		count.increment()
+		if count.value % 250 == 0:
+			print('\t',str(count.value), 'of', str(totaldbs), 'databases restored')
+		
+		if dbcontents['dbname'] in structuremap:
+			resetdb(dbcontents['dbname'], structuremap[dbcontents['dbname']], cur)
+		elif re.search(workfinder, dbcontents['dbname']):
+			resetdb(dbcontents['dbname'], strindividual_work, cur)
+		
+		if dbcontents['dbname'] != '':
+			reloadwhoeldb(dbcontents, cur)
+		
+		if re.search(workfinder, dbcontents['dbname']):
+			query = 'CREATE INDEX ' + dbcontents['dbname'] + '_mu_trgm_idx ON public.' + dbcontents['dbname'] + \
+			        ' USING gin (accented_line COLLATE pg_catalog."default" gin_trgm_ops)'
+			cur.execute(query)
+			dbc.commit()
+			
+			query = 'CREATE INDEX ' + dbcontents['dbname'] + '_st_trgm_idx ON public.' + dbcontents['dbname'] + \
+			        ' USING gin (accented_line COLLATE pg_catalog."default" gin_trgm_ops)'
+			cur.execute(query)
+			dbc.commit()
+
+	dbc.commit()
+	del dbc
+	
+	return
 
 # everything
-recursivereload(datadir, cursor)
+recursivereload(datadir)
 
 # support only
-# recursivereload(datadir+'/supportdbs/', cursor)
+# recursivereload(datadir+'/supportdbs/')
 
 # gk only
-# recursivereload(datadir+'/workdbs/greekauthors/', cursor)
+# recursivereload(datadir+'/workdbs/greekauthors/')
 
 # lt only
-# recursivereload(datadir+'/workdbs/latinauthors/', cursor)
+# recursivereload(datadir+'/workdbs/latinauthors/')

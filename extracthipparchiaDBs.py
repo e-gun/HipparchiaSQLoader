@@ -191,10 +191,11 @@ def mpauthorarchiver(count, location, intermediatedir, workstructure, authors):
 
 	dbc.commit()
 	del dbc
-
+	
+	return
 
 print('archiving support dbs')
-#archivesupportdbs(datadir,cursor)
+archivesupportdbs(datadir,cursor)
 
 print('archiving individual works')
 archiveallworks(datadir, strindividual_work, cursor)
