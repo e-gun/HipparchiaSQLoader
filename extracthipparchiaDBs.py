@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 #!../bin/python
-import psycopg2
-import configparser
+
 import pickle
 import gzip
 import os
-from dbstructures import *
+from dbhelpers import *
+from multiprocessing import Process, Manager
+from mpclass import MPCounter
+
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -136,34 +138,63 @@ def archiveallworks(location, workstructure, cursor):
 	if not os.path.exists(location + intermediatedir + 'latinauthors/'):
 		os.makedirs(location + intermediatedir + 'latinauthors/')
 	
+	# a more interesting set of queries could output things like 5th c prose
 	q = 'SELECT universalid FROM authors ORDER BY universalid'
 	cursor.execute(q)
-	authors = cursor.fetchall()
+	authorids = cursor.fetchall()
 	
-	count = 0
+	manager = Manager()
+	count = MPCounter()
+	authors = manager.list(authorids)
+	workers = int(config['io']['workers'])
 	
-	for a in authors:
-		# a more interesting query could output things like 5th c prose
+	jobs = [Process(target=mpauthorarchiver, args=(count, location, intermediatedir, workstructure, authors)) for i in
+	        range(workers)]
+	
+	for j in jobs: j.start()
+	for j in jobs: j.join()
+	
+	return
+
+
+def mpauthorarchiver(count, location, intermediatedir, workstructure, authors):
+	"""
+	share the archiving work
+	:param authorlist:
+	:return:
+	"""
+	
+	dbc = setconnection(config)
+	cur = dbc.cursor()
+	
+	while len(authors) > 0:
+		try: a = authors.pop()
+		except: a = ('gr0000',)
 		q = 'SELECT universalid FROM works WHERE universalid LIKE %s ORDER BY universalid'
-		d = (a[0]+'%',)
-		cursor.execute(q,d)
-		works = cursor.fetchall()
+		d = (a[0] + '%',)
+		cur.execute(q, d)
+		works = cur.fetchall()
 		if a[0][0:2] == 'gr':
 			langdir = location + intermediatedir + 'greekauthors/'
 		else:
 			langdir = location + intermediatedir + 'latinauthors/'
-	
+		
 		for w in works:
-			count += 2
-			if count % 250 == 0:
-				print(str(count)+' databases extracted')
-			if not os.path.exists(langdir+a[0]+'/'):
-				os.makedirs(langdir+a[0]+'/')
-			dbloc = langdir+a[0]+'/'
-			archivesinglework(w[0], workstructure, dbloc, cursor)
-			dbconnection.commit()
+			count.increment()
+			if count.value % 250 == 0:
+				print(str(count.value) + ' databases extracted')
+			if not os.path.exists(langdir + a[0] + '/'):
+				os.makedirs(langdir + a[0] + '/')
+			dbloc = langdir + a[0] + '/'
+			archivesinglework(w[0], workstructure, dbloc, cur)
+			dbc.commit()
 
-	return
+	dbc.commit()
+	del dbc
 
-archivesupportdbs(datadir,cursor)
+
+print('archiving support dbs')
+#archivesupportdbs(datadir,cursor)
+
+print('archiving individual works')
 archiveallworks(datadir, strindividual_work, cursor)

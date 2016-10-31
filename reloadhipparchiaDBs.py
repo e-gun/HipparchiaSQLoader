@@ -7,7 +7,7 @@ import gzip
 import time
 import os
 import re
-from dbstructures import *
+from dbhelpers import *
 
 config = configparser.ConfigParser()
 config.read('config.ini')
