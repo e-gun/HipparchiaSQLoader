@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 #!../bin/python
-
 """
-	HipparchiaSQLoader: archive/restore a database of Greek and Latin texts
+	HipparchiaServer: an interface to a database of Greek and Latin texts
 	Copyright: E Gunderson 2016
-	License: GPL 3 (see LICENSE in the top level directory of the distribution)
+	License: GNU GENERAL PUBLIC LICENSE 3
+		(see LICENSE in the top level directory of the distribution)
 """
 
 import pickle
@@ -67,7 +67,7 @@ def resetdb(dbname, structuremap, cursor):
 	cursor.execute(query)
 	dbconnection.commit()
 	
-	if re.search(r'(gr|lt)\d\d\d\d',dbname) is not None:
+	if re.search(r'(gr|lt|in|dp|ch)\d\d\d\d',dbname) is not None:
 		query = 'DROP INDEX IF EXISTS public.'+dbname+'_mu_trgm_idx'
 		cursor.execute(query)
 		dbconnection.commit()
@@ -81,6 +81,7 @@ def resetdb(dbname, structuremap, cursor):
 	dbconnection.commit()
 	
 	return
+
 
 def reloadwhoeldb(dbcontents, cursor):
 	"""
@@ -180,7 +181,8 @@ def recursivereload(datadir):
 		'greek_lemmata': strgreek_lemmata,
 		'latin_lemmata': strlatin_lemmata,
 		'greek_morphology': strgreek_morphology,
-		'latin_morphology': strlatin_morphology
+		'latin_morphology': strlatin_morphology,
+		'builderversion': strbuilderversion
 		}
 	
 	print('scanning the filesystem')
@@ -201,12 +203,13 @@ def recursivereload(datadir):
 	
 	return
 
+
 def mpreloader(dbs, count, totaldbs, structuremap):
 	"""
 	mp reader reloader
 	:return:
 	"""
-	workfinder = re.compile(r'(gr|lt)\d\d\d\dw\d\d\d$')
+	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\d\d\d\d$')
 	
 	dbc = setconnection(config)
 	cur = dbc.cursor()
@@ -225,20 +228,20 @@ def mpreloader(dbs, count, totaldbs, structuremap):
 		
 		if dbcontents['dbname'] in structuremap:
 			resetdb(dbcontents['dbname'], structuremap[dbcontents['dbname']], cur)
-		elif re.search(workfinder, dbcontents['dbname']):
-			resetdb(dbcontents['dbname'], strindividual_work, cur)
+		elif re.search(authorfinder, dbcontents['dbname']):
+			resetdb(dbcontents['dbname'], strindividual_authorfile, cur)
 		
 		if dbcontents['dbname'] != '':
 			reloadwhoeldb(dbcontents, cur)
 		
-		if re.search(workfinder, dbcontents['dbname']):
+		if re.search(authorfinder, dbcontents['dbname']):
 			query = 'CREATE INDEX ' + dbcontents['dbname'] + '_mu_trgm_idx ON public.' + dbcontents['dbname'] + \
 			        ' USING gin (accented_line COLLATE pg_catalog."default" gin_trgm_ops)'
 			cur.execute(query)
 			dbc.commit()
 			
 			query = 'CREATE INDEX ' + dbcontents['dbname'] + '_st_trgm_idx ON public.' + dbcontents['dbname'] + \
-			        ' USING gin (accented_line COLLATE pg_catalog."default" gin_trgm_ops)'
+			        ' USING gin (stripped_line COLLATE pg_catalog."default" gin_trgm_ops)'
 			cur.execute(query)
 			dbc.commit()
 

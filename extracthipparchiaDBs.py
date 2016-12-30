@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 #!../bin/python
 """
-	HipparchiaSQLoader: archive/restore a database of Greek and Latin texts
+	HipparchiaServer: an interface to a database of Greek and Latin texts
 	Copyright: E Gunderson 2016
-	License: GPL 3 (see LICENSE in the top level directory of the distribution)
+	License: GNU GENERAL PUBLIC LICENSE 3
+		(see LICENSE in the top level directory of the distribution)
 """
 
 import pickle
@@ -23,6 +24,7 @@ dbconnection = psycopg2.connect(user=config['db']['DBUSER'], host=config['db']['
                                 port=config['db']['DBPORT'], database=config['db']['DBNAME'],
                                 password=config['db']['DBPASS'])
 cursor = dbconnection.cursor()
+
 
 def fetchit(dbname, dbstructurelist, cursor):
 	"""
@@ -97,8 +99,10 @@ def archivesupportdbs(location,cursor):
 	       'greek_lemmata': strgreek_lemmata,
 	       'latin_lemmata': strlatin_lemmata,
 	       'greek_morphology': strgreek_morphology,
-	       'latin_morphology': strlatin_morphology
+	       'latin_morphology': strlatin_morphology,
+		   'builderversion': strbuilderversion
 	       }
+
 	for db in dbs:
 		dbcontents = fetchit(db,dbs[db],cursor)
 		pickleddb = pickleprep(db, dbs[db], dbcontents)
@@ -107,7 +111,7 @@ def archivesupportdbs(location,cursor):
 	return
 
 
-def archivesinglework(db, structure, location, cursor):
+def archivesingleauthor(db, structure, location, cursor):
 	"""
 	pickle and save a single work
 	:param location:
@@ -125,7 +129,7 @@ def archivesinglework(db, structure, location, cursor):
 	return
 
 
-def archiveallworks(location, workstructure, cursor):
+def archiveallauthors(location, authordbstructure, cursor):
 	"""
 	search for the lot of them and then do it
 	:param location:
@@ -133,27 +137,28 @@ def archiveallworks(location, workstructure, cursor):
 	:return:
 	"""
 	
-	intermediatedir = 'workdbs/'
+	intermediatedir = 'authordbs/'
 	if not os.path.exists(location + intermediatedir):
 		os.makedirs(location+intermediatedir)
-	
-	if not os.path.exists(location + intermediatedir + 'greekauthors/'):
-		os.makedirs(location + intermediatedir + 'greekauthors/')
-	
-	if not os.path.exists(location + intermediatedir + 'latinauthors/'):
-		os.makedirs(location + intermediatedir + 'latinauthors/')
-	
+
+	coprora = knowncorpora()
+
+	for c in coprora:
+		if not os.path.exists(location + intermediatedir + c):
+			os.makedirs(location + intermediatedir + c)
+
 	# a more interesting set of queries could output things like 5th c prose
 	q = 'SELECT universalid FROM authors ORDER BY universalid'
 	cursor.execute(q)
 	authorids = cursor.fetchall()
+	authorids = [a[0] for a in authorids]
 	
 	manager = Manager()
 	count = MPCounter()
 	authors = manager.list(authorids)
 	workers = int(config['io']['workers'])
 	
-	jobs = [Process(target=mpauthorarchiver, args=(count, location, intermediatedir, workstructure, authors)) for i in
+	jobs = [Process(target=mpauthorarchiver, args=(count, location, intermediatedir, authordbstructure, authors)) for i in
 	        range(workers)]
 	
 	for j in jobs: j.start()
@@ -162,7 +167,7 @@ def archiveallworks(location, workstructure, cursor):
 	return
 
 
-def mpauthorarchiver(count, location, intermediatedir, workstructure, authors):
+def mpauthorarchiver(count, location, intermediatedir, authordbstructure, authors):
 	"""
 	share the archiving work
 	:param authorlist:
@@ -174,33 +179,34 @@ def mpauthorarchiver(count, location, intermediatedir, workstructure, authors):
 	
 	while len(authors) > 0:
 		try: a = authors.pop()
-		except: a = ('gr0000',)
-		q = 'SELECT universalid FROM works WHERE universalid LIKE %s ORDER BY universalid'
-		d = (a[0] + '%',)
-		cur.execute(q, d)
-		works = cur.fetchall()
-		if a[0][0:2] == 'gr':
-			langdir = location + intermediatedir + 'greekauthors/'
-		else:
-			langdir = location + intermediatedir + 'latinauthors/'
-		
-		for w in works:
-			count.increment()
-			if count.value % 250 == 0:
-				print(str(count.value) + ' databases extracted')
-			if not os.path.exists(langdir + a[0] + '/'):
-				os.makedirs(langdir + a[0] + '/')
-			dbloc = langdir + a[0] + '/'
-			archivesinglework(w[0], workstructure, dbloc, cur)
-			dbc.commit()
+		except: a = 'gr0000'
+
+
+		langdir = location + intermediatedir + a[0:2]
+		if not os.path.exists(langdir + a[0:4] + '/'):
+			os.makedirs(langdir + a[0:4] + '/')
+		dbloc = langdir + a[0:4] + '/'
+
+		archivesingleauthor(a, authordbstructure, dbloc, cur)
+
+		dbc.commit()
+
+		count.increment()
+		if count.value % 250 == 0:
+			print(str(count.value) + ' databases extracted')
 
 	dbc.commit()
 	del dbc
 	
 	return
 
-print('archiving support dbs')
-archivesupportdbs(datadir,cursor)
 
-print('archiving individual works')
-archiveallworks(datadir, strindividual_work, cursor)
+testresults = templatetest()
+if 0 in testresults:
+	print('aborting:',testresults[0],'is not a DB version I can extract')
+else:
+	print('archiving support dbs')
+	archivesupportdbs(datadir,cursor)
+
+	print('archiving individual authorfiles')
+	archiveallauthors(datadir, strindividual_authorfile, cursor)

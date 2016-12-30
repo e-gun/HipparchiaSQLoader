@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-	HipparchiaSQLoader: archive/restore a database of Greek and Latin texts
+	HipparchiaServer: an interface to a database of Greek and Latin texts
 	Copyright: E Gunderson 2016
-	License: GPL 3 (see LICENSE in the top level directory of the distribution)
+	License: GNU GENERAL PUBLIC LICENSE 3
+		(see LICENSE in the top level directory of the distribution)
 """
 
 import psycopg2
@@ -11,6 +12,8 @@ import configparser
 
 config = configparser.ConfigParser()
 config.read('config.ini')
+
+sqltemplateversion = 12272016
 
 
 def setconnection(config):
@@ -21,12 +24,62 @@ def setconnection(config):
 	
 	return dbconnection
 
+
+def templatetest():
+	"""
+
+	make sure that HipparchiaSQLoader knows how to deal with the databases that are coming its way
+
+	:return:
+	"""
+
+	dbc = setconnection(config)
+	cur = dbc.cursor()
+
+	q = 'SELECT templateversion FROM builderversion'
+	cur.execute(q)
+	versions = cur.fetchall()
+
+	versions = set([x[0] for x in versions])
+
+	compatible = 1
+	version = sqltemplateversion
+
+	for v in versions:
+		if v != sqltemplateversion:
+			version = v
+			compatible = 0
+
+	testresults = {compatible: version}
+
+	return testresults
+
+
+def knowncorpora():
+	"""
+
+	test for what is available
+
+	return list of available dbs
+
+	:return:
+	"""
+	activecorporalist = []
+
+	dbc = setconnection(config)
+	cur = dbc.cursor()
+
+	q = 'SELECT universalid FROM authors'
+	cur.execute(q)
+	ids = cur.fetchall()
+
+	prefixes = set([id[0:2] for id in ids])
+
+	dbc.commit()
+
+	return activecorporaset
+
 # dictionaries that tell you the SQL structure of the Hipparchia DBs
-# in SQL dump:
-#   find: [note 2 leading whitespaces]
-#         (.*?)\s(.*?)(,|$)
-#   replace:
-#       \t('\1', '\2')\3
 
 strauthors = [
 	('universalid', 'character(6)'),
@@ -36,7 +89,8 @@ strauthors = [
 	('shortname', 'character varying(128)'),
 	('cleanname', 'character varying(128)'),
 	('genres', 'character varying(512)'),
-	('floruit', 'character varying(8)'),
+	('recorded_date', 'character varying(64)'),
+	('converted_date', 'character varying(8)'),
 	('location', 'character varying(128)')
 ]
 
@@ -54,14 +108,18 @@ strworks = [
 	('workgenre', 'character varying(32)'),
 	('transmission', 'character varying(32)'),
 	('worktype', 'character varying(32)'),
+	('provenance', 'character varying(64)'),
+	('recorded_date', 'character varying(64)'),
+	('converted_date', 'character varying(8)'),
 	('wordcount', 'integer'),
 	('firstline', 'integer'),
 	('lastline', 'integer'),
 	('authentic', 'boolean')
 ]
 
-strindividual_work = [
+strindividual_authorfile = [
 	('index', 'integer NOT NULL'),
+	('wkuniversalid', 'character varying(10)'),
 	('level_05_value', 'character varying(64)'),
 	('level_04_value', 'character varying(64)'),
 	('level_03_value', 'character varying(64)'),
@@ -125,5 +183,11 @@ strlatin_morphology = [
 	('possible_dictionary_forms', 'text')
 ]
 
+
+strbuilderversion = [
+	('templateversion', 'integer'),
+	('corpusname', 'character varying(2)'),
+	('corpusbuilddate', 'character varying(20)')
+]
 
 
