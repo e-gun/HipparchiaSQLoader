@@ -64,7 +64,6 @@ def knowncorpora():
 
 	:return:
 	"""
-	activecorporalist = []
 
 	dbc = setconnection(config)
 	cur = dbc.cursor()
@@ -72,12 +71,13 @@ def knowncorpora():
 	q = 'SELECT universalid FROM authors'
 	cur.execute(q)
 	ids = cur.fetchall()
-
+	ids = [x[0] for x in ids]
 	prefixes = set([id[0:2] for id in ids])
 
 	dbc.commit()
 
-	return activecorporaset
+	return prefixes
+
 
 # dictionaries that tell you the SQL structure of the Hipparchia DBs
 

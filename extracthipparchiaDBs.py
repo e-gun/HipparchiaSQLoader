@@ -157,7 +157,9 @@ def archiveallauthors(location, authordbstructure, cursor):
 	count = MPCounter()
 	authors = manager.list(authorids)
 	workers = int(config['io']['workers'])
-	
+
+	print(len(authorids),'author databases to extract')
+
 	jobs = [Process(target=mpauthorarchiver, args=(count, location, intermediatedir, authordbstructure, authors)) for i in
 	        range(workers)]
 	
@@ -182,10 +184,15 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 		except: a = 'gr0000'
 
 
-		langdir = location + intermediatedir + a[0:2]
-		if not os.path.exists(langdir + a[0:4] + '/'):
-			os.makedirs(langdir + a[0:4] + '/')
-		dbloc = langdir + a[0:4] + '/'
+		langdir = location + intermediatedir
+		if not os.path.exists(langdir + a[0:2] + '/' + a[0:4] + '/'):
+			try:
+				os.makedirs(langdir + a[0:2] + '/' + a[0:4] + '/')
+			except:
+				# FileExistsError: [Errno 17] File exists:
+				# MP means a race to create
+				pass
+		dbloc = langdir + a[0:2] + '/' + a[0:4] + '/'
 
 		archivesingleauthor(a, authordbstructure, dbloc, cur)
 
@@ -193,7 +200,7 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 
 		count.increment()
 		if count.value % 250 == 0:
-			print(str(count.value) + ' databases extracted')
+			print('\t',str(count.value) + ' databases extracted')
 
 	dbc.commit()
 	del dbc
@@ -206,7 +213,7 @@ if 0 in testresults:
 	print('aborting:',testresults[0],'is not a DB version I can extract')
 else:
 	print('archiving support dbs')
-	archivesupportdbs(datadir,cursor)
+	# archivesupportdbs(datadir,cursor)
 
 	print('archiving individual authorfiles')
 	archiveallauthors(datadir, strindividual_authorfile, cursor)
