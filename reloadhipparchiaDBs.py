@@ -65,7 +65,7 @@ def resetdb(dbname, structuremap, cursor):
 	cursor.execute(query)
 	dbconnection.commit()
 
-	if re.search(r'(gr|lt|in|dp|ch)\d\d\d\d', dbname) is not None:
+	if re.search(r'(gr|lt|in|dp|ch)....', dbname) is not None:
 		query = 'DROP INDEX IF EXISTS public.' + dbname + '_mu_trgm_idx'
 		cursor.execute(query)
 		dbconnection.commit()
