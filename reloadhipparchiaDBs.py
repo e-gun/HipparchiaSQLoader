@@ -65,7 +65,7 @@ def resetdb(dbname, structuremap, cursor):
 	cursor.execute(query)
 	dbconnection.commit()
 
-	if re.search(r'(gr|lt|in|dp|ch)....', dbname) is not None:
+	if re.search(r'(gr|lt|in|dp|ch)\w\w\w\w', dbname) is not None:
 		query = 'DROP INDEX IF EXISTS public.' + dbname + '_mu_trgm_idx'
 		cursor.execute(query)
 		dbconnection.commit()
@@ -73,6 +73,8 @@ def resetdb(dbname, structuremap, cursor):
 		query = 'DROP INDEX IF EXISTS public.' + dbname + '_st_trgm_idx'
 		cursor.execute(query)
 		dbconnection.commit()
+	else:
+		print('invalid dbname',dbname)
 
 	query = 'GRANT SELECT ON TABLE ' + dbname + ' TO hippa_rd;'
 	cursor.execute(query)
@@ -194,7 +196,7 @@ def recursivereload(datadir):
 
 	print('dropping any old tables and creating new ones')
 
-	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\d\d\d\d$')
+	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\w\w\w\w$')
 	for db in dbpaths:
 		dbcontents = retrievedb(db)
 		if dbcontents['dbname'] in structuremap:
@@ -223,7 +225,7 @@ def mpreloader(dbs, count, totaldbs):
 	mp reader reloader
 	:return:
 	"""
-	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\d\d\d\d$')
+	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\w\w\w\w$')
 
 	dbc = setconnection(config)
 	cur = dbc.cursor()
