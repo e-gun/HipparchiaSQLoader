@@ -197,6 +197,7 @@ def recursivereload(datadir):
 	print('dropping any old tables and creating new ones')
 
 	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\w\w\w\w$')
+
 	for db in dbpaths:
 		dbcontents = retrievedb(db)
 		if dbcontents['dbname'] in structuremap:
@@ -225,6 +226,7 @@ def mpreloader(dbs, count, totaldbs):
 	mp reader reloader
 	:return:
 	"""
+
 	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\w\w\w\w$')
 
 	dbc = setconnection(config)
