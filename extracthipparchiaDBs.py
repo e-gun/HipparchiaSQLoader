@@ -213,7 +213,7 @@ if 0 in testresults:
 	print('aborting:',testresults[0],'is not a DB version I can extract')
 else:
 	print('archiving support dbs')
-	# archivesupportdbs(datadir,cursor)
+	archivesupportdbs(datadir,cursor)
 
 	print('archiving individual authorfiles')
 	archiveallauthors(datadir, strindividual_authorfile, cursor)
