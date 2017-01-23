@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from multiprocessing import Value
 
 class MPCounter(object):
