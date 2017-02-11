@@ -190,6 +190,11 @@ def recursivereload(datadir):
 		'builderversion': strbuilderversion
 	}
 
+	letters = '0abcdefghijklmnopqrstuvwxyzαβψδεφγηιξκλμνοπρϲτυωχθζ'
+
+	for l in letters:
+		structuremap['wordcounts_'+l] = strwordcount
+
 	print('scanning the filesystem')
 	dbpaths = buildfilesearchlist(datadir, [])
 	totaldbs = len(dbpaths)

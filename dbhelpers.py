@@ -190,3 +190,12 @@ strbuilderversion = [
 	('corpusbuilddate', 'character varying(20)')
 ]
 
+strwordcount = [
+	('entry_name', 'character varying(64)'),
+	('total_count', 'integer'),
+	('gr_count', 'integer'),
+	('lt_count', 'integer'),
+	('dp_count', 'integer'),
+	('in_count', 'integer'),
+	('ch_count', 'integer')
+]

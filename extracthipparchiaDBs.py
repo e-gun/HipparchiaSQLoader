@@ -103,6 +103,11 @@ def archivesupportdbs(location,cursor):
 		   'builderversion': strbuilderversion
 	       }
 
+	letters = '0abcdefghijklmnopqrstuvwxyzαβψδεφγηιξκλμνοπρϲτυωχθζ'
+
+	for l in letters:
+		dbs['wordcounts_'+l] = strwordcount
+
 	for db in dbs:
 		dbcontents = fetchit(db,dbs[db],cursor)
 		pickleddb = pickleprep(db, dbs[db], dbcontents)
