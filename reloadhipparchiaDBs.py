@@ -203,12 +203,16 @@ def recursivereload(datadir):
 
 	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\w\w\w\w$')
 
+	count = 0
 	for db in dbpaths:
+		count += 1
 		dbcontents = retrievedb(db)
 		if dbcontents['dbname'] in structuremap:
 			resetdb(dbcontents['dbname'], structuremap[dbcontents['dbname']], cur)
 		elif re.search(authorfinder, dbcontents['dbname']):
 			resetdb(dbcontents['dbname'], strindividual_authorfile, cur)
+		if count % 500 == 0:
+			dbc.commit()
 	dbc.commit()
 
 	print('beginning to reload the databases:', totaldbs, 'found')
