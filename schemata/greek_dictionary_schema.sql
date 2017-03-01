@@ -16,6 +16,10 @@ SET row_security = off;
 
 SET search_path = public, pg_catalog;
 
+DROP INDEX public.greek_dictionary_idx;
+DROP TABLE public.greek_dictionary;
+SET search_path = public, pg_catalog;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;

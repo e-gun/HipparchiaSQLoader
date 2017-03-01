@@ -16,6 +16,10 @@ SET row_security = off;
 
 SET search_path = public, pg_catalog;
 
+DROP INDEX public.wcindexts;
+DROP TABLE public.dictionary_headword_wordcounts;
+SET search_path = public, pg_catalog;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;

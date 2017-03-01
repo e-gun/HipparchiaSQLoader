@@ -16,6 +16,10 @@ SET row_security = off;
 
 SET search_path = public, pg_catalog;
 
+DROP INDEX public.latin_lemmata_idx;
+DROP TABLE public.latin_lemmata;
+SET search_path = public, pg_catalog;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;

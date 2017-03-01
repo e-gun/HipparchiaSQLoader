@@ -16,6 +16,11 @@ SET row_security = off;
 
 SET search_path = public, pg_catalog;
 
+DROP INDEX public.gr0001_st_trgm_idx;
+DROP INDEX public.gr0001_mu_trgm_idx;
+DROP TABLE public.gr0001;
+SET search_path = public, pg_catalog;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;

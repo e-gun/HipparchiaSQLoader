@@ -16,6 +16,11 @@ SET row_security = off;
 
 SET search_path = public, pg_catalog;
 
+DROP INDEX public.latin_morphology_idx;
+DROP INDEX public.latin_analysis_trgm_idx;
+DROP TABLE public.latin_morphology;
+SET search_path = public, pg_catalog;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;

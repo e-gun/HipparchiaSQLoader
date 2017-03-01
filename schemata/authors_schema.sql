@@ -16,6 +16,9 @@ SET row_security = off;
 
 SET search_path = public, pg_catalog;
 
+DROP TABLE public.authors;
+SET search_path = public, pg_catalog;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
