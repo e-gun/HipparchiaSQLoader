@@ -10,5 +10,5 @@ fi
 
 for table in authors gr0001 builderversion dictionary_headword_wordcounts greek_dictionary greek_lemmata greek_morphology latin_dictionary latin_lemmata latin_morphology wordcounts_0 works
 do 
-	$PGDUMP -s -t $table $DB > $OUTDIR/${table}_schema.sql
+	$PGDUMP -c -s -t $table $DB > $OUTDIR/${table}_schema.sql
 done
