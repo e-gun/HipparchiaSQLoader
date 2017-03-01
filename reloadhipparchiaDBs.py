@@ -39,13 +39,39 @@ def retrievedb(location):
 def resetdb(tablename, templatetablename, templatefilename, cursor):
 	"""
 	empty out a db and get it ready for reloaded data
+
+	build the set of queries from the output of 'pgdump -c -s -t'
+
 	:param dbname:
 	:param cursor:
 	:return:
 	"""
 
-	query = loadschemafromfile(tablename, templatetablename, templatefilename)
-	cursor.execute(query)
+	querylines = loadschemafromfile(tablename, templatetablename, templatefilename)
+	querylines = [q for q in querylines if q and re.search(r'^--',q) is None]
+	querylines = [re.sub(r'DROP (.*?)public',r'DROP \1 IF EXISTS public',q) for q in querylines]
+
+	corequery = [q for q in querylines if re.search(r',$',q) or re.search(r'CREATE TABLE',q) or re.search(r'[^;]$',q) or q == ');']
+
+	othersql = []
+	for q in querylines:
+		if re.search(r';$',q) and q not in corequery:
+			othersql.append(q)
+		else:
+			othersql.append('padding')
+
+	corequery = ' '.join(corequery)
+
+	tablecreated = False
+
+	for q in othersql:
+		if q != 'padding':
+			cursor.execute(q)
+		elif tablecreated is False:
+			cursor.execute(corequery)
+			tablecreated = True
+		else:
+			pass
 
 	return
 

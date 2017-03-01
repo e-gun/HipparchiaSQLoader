@@ -89,10 +89,11 @@ def loadschemafromfile(tablename, templatetablename, filename):
 	"""
 
 	with open(filename, 'rt') as s:
-		fullschema = s.read()
+		fullschema = s.readlines()
 
 	# do not name every work table 'gr0001' or every wordcount table 'wordcounts_0'
-	fullschema = re.sub(templatetablename, tablename, fullschema)
+	fullschema = [re.sub(templatetablename, tablename, x) for x in fullschema]
+	fullschema = [s.strip() for s in fullschema]
 
 	return fullschema
 
