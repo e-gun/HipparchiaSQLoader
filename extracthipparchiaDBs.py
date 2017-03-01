@@ -21,11 +21,6 @@ config.read('config.ini')
 datadir = config['io']['datadir']+'sqldumps/'
 schemadir = config['io']['schemadir']
 
-dbconnection = psycopg2.connect(user=config['db']['DBUSER'], host=config['db']['DBHOST'],
-                                port=config['db']['DBPORT'], database=config['db']['DBNAME'],
-                                password=config['db']['DBPASS'])
-cursor = dbconnection.cursor()
-
 
 def fetchit(dbname, dbstructurelist, cursor):
 	"""
@@ -80,12 +75,16 @@ def storeit(location, pickleddb):
 	return
 
 
-def archivesupportdbs(location, cursor):
+def archivesupportdbs(location):
 	"""
 	take all of the non-work dbs and store them
 	
 	:return:
 	"""
+
+	dbc = setconnection(config)
+	cur = dbc.cursor()
+
 	intermediatedir = 'supportdbs/'
 	if not os.path.exists(location + intermediatedir):
 		os.makedirs(location+intermediatedir)
@@ -105,7 +104,8 @@ def archivesupportdbs(location, cursor):
 		dbs['wordcounts_'+l] = strwordcount
 
 	for db in dbs:
-		dbcontents = fetchit(db,dbs[db],cursor)
+		dbcontents = fetchit(db,dbs[db],cur)
+		dbc.commit()
 		pickleddb = pickleprep(db, dbs[db], dbcontents)
 		storeit(location+intermediatedir+db+suffix,pickleddb)
 	
@@ -130,14 +130,17 @@ def archivesingleauthor(db, structure, location, cursor):
 	return
 
 
-def archiveallauthors(location, authordbstructure, cursor):
+def archiveallauthors(location, authordbstructure):
 	"""
 	search for the lot of them and then do it
 	:param location:
 	:param cursor:
 	:return:
 	"""
-	
+
+	dbc = setconnection(config)
+	cur = dbc.cursor()
+
 	intermediatedir = 'authordbs/'
 	if not os.path.exists(location + intermediatedir):
 		os.makedirs(location+intermediatedir)
@@ -150,10 +153,11 @@ def archiveallauthors(location, authordbstructure, cursor):
 
 	# a more interesting set of queries could output things like 5th c prose
 	q = 'SELECT universalid FROM authors ORDER BY universalid'
-	cursor.execute(q)
-	authorids = cursor.fetchall()
+	cur.execute(q)
+	authorids = cur.fetchall()
 	authorids = [a[0] for a in authorids]
-	
+	dbc.commit()
+
 	manager = Manager()
 	count = MPCounter()
 	authors = manager.list(authorids)
@@ -195,7 +199,8 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 				pass
 		dbloc = langdir + a[0:2] + '/' + a[0:4] + '/'
 
-		archivesingleauthor(a, authordbstructure, dbloc, cur)
+		if a != 'gr0000':
+			archivesingleauthor(a, authordbstructure, dbloc, cur)
 
 		dbc.commit()
 
@@ -214,8 +219,8 @@ if 0 in testresults:
 	print('aborting:',testresults[0],'is not a DB version I can extract')
 else:
 	print('archiving support dbs')
-	archivesupportdbs(datadir,cursor)
+	archivesupportdbs(datadir)
 
 	print('archiving individual authorfiles')
 	strindividual_authorfile = loadcolumnsfromfile(schemadir+'gr0001_schema.sql')
-	archiveallauthors(datadir, strindividual_authorfile, cursor)
+	archiveallauthors(datadir, strindividual_authorfile)

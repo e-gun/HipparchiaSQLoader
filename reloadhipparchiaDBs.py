@@ -20,13 +20,6 @@ config.read('config.ini')
 datadir = config['io']['datadir'] + 'sqldumps/'
 schemadir = config['io']['schemadir']
 
-dbconnection = psycopg2.connect(user=config['db']['DBUSER'], host=config['db']['DBHOST'],
-								port=config['db']['DBPORT'], database=config['db']['DBNAME'],
-								password=config['db']['DBPASS'])
-
-# dbconnection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-cursor = dbconnection.cursor()
-
 
 def retrievedb(location):
 	"""
@@ -51,25 +44,24 @@ def resetdb(tablename, templatetablename, templatefilename, cursor):
 	:return:
 	"""
 
-	query = 'DROP TABLE IF EXISTS ' + tablename
-	cursor.execute(query)
-	dbconnection.commit()
-
 	query = loadschemafromfile(tablename, templatetablename, templatefilename)
-
 	cursor.execute(query)
-	dbconnection.commit()
 
 	return
 
 
-def reloadwhoeldb(dbcontents, cursor):
+def reloadwhoeldb(dbcontents):
 	"""
 	the pickle package itself should tell you all you need to know to call reloadoneline() repeatedly
 	note that the dbname is stored in the file and need not be derived from the filename itself
 	:param dbcontents:
 	:return:
 	"""
+
+	dbc = setconnection(config)
+	cur = dbc.cursor()
+
+
 	dbname = dbcontents['dbname']
 	structure = dbcontents['structure']
 	data = dbcontents['data']
@@ -79,12 +71,12 @@ def reloadwhoeldb(dbcontents, cursor):
 		count += 1
 		# 32k is the limit?
 		if count % 5000 == 0:
-			dbconnection.commit()
+			dbc.commit()
 		if count % 50000 == 0:
 			print('\t\tlongdb: ', dbname, '[ @ line ', count, ']')
-		reloadoneline(line, dbname, structure, cursor)
+		reloadoneline(line, dbname, structure, cur)
 
-	dbconnection.commit()
+	dbc.commit()
 
 	return
 
@@ -190,6 +182,7 @@ def recursivereload(datadir):
 		elif re.search(authorfinder, nm):
 			resetdb(nm, 'gr0001', schemadir+'gr0001_schema.sql', cur)
 		if count % 500 == 0:
+			print(count,'dbs reset')
 			dbc.commit()
 	dbc.commit()
 
@@ -214,8 +207,6 @@ def mpreloader(dbs, count, totaldbs):
 	:return:
 	"""
 
-	authorfinder = re.compile(r'(gr|lt|in|dp|ch)\w\w\w\w$')
-
 	dbc = setconnection(config)
 	cur = dbc.cursor()
 
@@ -231,21 +222,8 @@ def mpreloader(dbs, count, totaldbs):
 		if count.value % 200 == 0:
 			print('\t', str(count.value), 'of', str(totaldbs), 'databases restored')
 
-		# print('loading',dbcontents['dbname'])
-
 		if dbcontents['dbname'] != '':
-			reloadwhoeldb(dbcontents, cur)
-
-		if re.search(authorfinder, dbcontents['dbname']):
-			query = 'CREATE INDEX ' + dbcontents['dbname'] + '_mu_trgm_idx ON public.' + dbcontents['dbname'] + \
-					' USING gin (accented_line COLLATE pg_catalog."default" gin_trgm_ops)'
-			cur.execute(query)
-			dbc.commit()
-
-			query = 'CREATE INDEX ' + dbcontents['dbname'] + '_st_trgm_idx ON public.' + dbcontents['dbname'] + \
-					' USING gin (stripped_line COLLATE pg_catalog."default" gin_trgm_ops)'
-			cur.execute(query)
-			dbc.commit()
+			reloadwhoeldb(dbcontents)
 
 	dbc.commit()
 	del dbc
