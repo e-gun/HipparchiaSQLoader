@@ -10,7 +10,6 @@
 import pickle
 import gzip
 import os
-import re
 from dbhelpers import *
 from multiprocessing import Process, Manager
 from mpclass import MPCounter
@@ -19,6 +18,7 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 datadir = config['io']['datadir'] + 'sqldumps/'
+schemadir = config['io']['schemadir']
 
 dbconnection = psycopg2.connect(user=config['db']['DBUSER'], host=config['db']['DBHOST'],
 								port=config['db']['DBPORT'], database=config['db']['DBNAME'],
@@ -43,7 +43,7 @@ def retrievedb(location):
 	return dbcontents
 
 
-def resetdb(dbname, structuremap, cursor):
+def resetdb(tablename, templatetablename, templatefilename, cursor):
 	"""
 	empty out a db and get it ready for reloaded data
 	:param dbname:
@@ -51,32 +51,12 @@ def resetdb(dbname, structuremap, cursor):
 	:return:
 	"""
 
-	query = 'DROP TABLE IF EXISTS public.' + dbname
+	query = 'DROP TABLE IF EXISTS ' + tablename
 	cursor.execute(query)
 	dbconnection.commit()
 
-	query = 'CREATE TABLE public.' + dbname + ' ('
-	for column in structuremap:
-		if column[0] == 'index':
-			query += column[0] + ' ' + column[1] + ' DEFAULT nextval(\'' + dbname + '\'::regclass), '
-		else:
-			query += column[0] + ' ' + column[1] + ', '
-	query = query[:-2] + ') WITH ( OIDS=FALSE );'
-	cursor.execute(query)
-	dbconnection.commit()
+	query = loadschemafromfile(tablename, templatetablename, templatefilename)
 
-	if re.search(r'(gr|lt|in|dp|ch)\w\w\w\w', dbname) is not None:
-		query = 'DROP INDEX IF EXISTS public.' + dbname + '_mu_trgm_idx'
-		cursor.execute(query)
-		dbconnection.commit()
-
-		query = 'DROP INDEX IF EXISTS public.' + dbname + '_st_trgm_idx'
-		cursor.execute(query)
-		dbconnection.commit()
-	else:
-		print('invalid dbname',dbname)
-
-	query = 'GRANT SELECT ON TABLE ' + dbname + ' TO hippa_rd;'
 	cursor.execute(query)
 	dbconnection.commit()
 
@@ -178,22 +158,17 @@ def recursivereload(datadir):
 	dbc = setconnection(config)
 	cur = dbc.cursor()
 
-	structuremap = {
-		'authors': strauthors,
-		'works': strworks,
-		'greek_dictionary': strgreek_dictionary,
-		'latin_dictionary': strlatin_dictionary,
-		'greek_lemmata': strgreek_lemmata,
-		'latin_lemmata': strlatin_lemmata,
-		'greek_morphology': strgreek_morphology,
-		'latin_morphology': strlatin_morphology,
-		'builderversion': strbuilderversion
-	}
+	structures = {}
+	for item in ['authors', 'works', 'greek_dictionary', 'latin_dictionary', 'greek_lemmata', 'latin_lemmata',
+	             'greek_morphology', 'latin_morphology', 'builderversion']:
+		structures[item] = loadcolumnsfromfile(schemadir+item+'_schema.sql')
+
+	strwordcount = loadcolumnsfromfile(schemadir+'wordcounts_0_schema.sql')
 
 	letters = '0abcdefghijklmnopqrstuvwxyzαβψδεφγηιξκλμνοπρϲτυωχθζ'
 
 	for l in letters:
-		structuremap['wordcounts_'+l] = strwordcount
+		structures['wordcounts_'+l] = strwordcount
 
 	print('scanning the filesystem')
 	dbpaths = buildfilesearchlist(datadir, [])
@@ -207,10 +182,13 @@ def recursivereload(datadir):
 	for db in dbpaths:
 		count += 1
 		dbcontents = retrievedb(db)
-		if dbcontents['dbname'] in structuremap:
-			resetdb(dbcontents['dbname'], structuremap[dbcontents['dbname']], cur)
-		elif re.search(authorfinder, dbcontents['dbname']):
-			resetdb(dbcontents['dbname'], strindividual_authorfile, cur)
+		nm = dbcontents['dbname']
+		if nm in structures and 'wordcounts_' not in nm:
+			resetdb(nm, nm, schemadir+nm+'_schema.sql', cur)
+		elif nm in structures and 'wordcounts_' in nm:
+			resetdb(nm, 'wordcounts_0', schemadir+'wordcounts_0_schema.sql', cur)
+		elif re.search(authorfinder, nm):
+			resetdb(nm, 'gr0001', schemadir+'gr0001_schema.sql', cur)
 		if count % 500 == 0:
 			dbc.commit()
 	dbc.commit()

@@ -19,6 +19,7 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 datadir = config['io']['datadir']+'sqldumps/'
+schemadir = config['io']['schemadir']
 
 dbconnection = psycopg2.connect(user=config['db']['DBUSER'], host=config['db']['DBHOST'],
                                 port=config['db']['DBPORT'], database=config['db']['DBNAME'],
@@ -79,7 +80,7 @@ def storeit(location, pickleddb):
 	return
 
 
-def archivesupportdbs(location,cursor):
+def archivesupportdbs(location, cursor):
 	"""
 	take all of the non-work dbs and store them
 	
@@ -90,18 +91,13 @@ def archivesupportdbs(location,cursor):
 		os.makedirs(location+intermediatedir)
 		
 	suffix = '.pickle.gz'
-	
-	# map the names to the varaibles containing their structures
-	dbs = {'authors': strauthors,
-	       'works': strworks,
-	       'greek_dictionary': strgreek_dictionary,
-	       'latin_dictionary': strlatin_dictionary,
-	       'greek_lemmata': strgreek_lemmata,
-	       'latin_lemmata': strlatin_lemmata,
-	       'greek_morphology': strgreek_morphology,
-	       'latin_morphology': strlatin_morphology,
-		   'builderversion': strbuilderversion
-	       }
+
+	dbs = {}
+	for item in ['authors', 'works', 'greek_dictionary', 'latin_dictionary', 'greek_lemmata', 'latin_lemmata',
+	             'greek_morphology', 'latin_morphology', 'builderversion']:
+		dbs[item] = loadcolumnsfromfile(schemadir+item+'_schema.sql')
+
+	strwordcount = loadcolumnsfromfile(schemadir+'wordcounts_0_schema.sql')
 
 	letters = '0abcdefghijklmnopqrstuvwxyzαβψδεφγηιξκλμνοπρϲτυωχθζ'
 
@@ -221,4 +217,5 @@ else:
 	archivesupportdbs(datadir,cursor)
 
 	print('archiving individual authorfiles')
+	strindividual_authorfile = loadcolumnsfromfile(schemadir+'gr0001_schema.sql')
 	archiveallauthors(datadir, strindividual_authorfile, cursor)
