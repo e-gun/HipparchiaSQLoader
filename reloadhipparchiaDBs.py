@@ -178,7 +178,7 @@ def recursivereload(datadir):
 
 	structures = {}
 	for item in ['authors', 'works', 'greek_dictionary', 'latin_dictionary', 'greek_lemmata', 'latin_lemmata',
-	             'greek_morphology', 'latin_morphology', 'builderversion']:
+	             'greek_morphology', 'latin_morphology', 'builderversion', 'dictionary_headword_wordcounts']:
 		structures[item] = loadcolumnsfromfile(schemadir+item+'_schema.sql')
 
 	strwordcount = loadcolumnsfromfile(schemadir+'wordcounts_0_schema.sql')
