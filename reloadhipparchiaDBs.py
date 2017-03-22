@@ -257,8 +257,20 @@ def mpreloader(dbs, count, totaldbs):
 	return
 
 
+print('\n *** WARNING ***\n')
+print('You are about to completely erase any currently installed data\n')
+print('If "{d}" does not contain a full set of datafiles, HipparchiaServer will be sad and refuse to work properly, if at all.\n'.format(d=datadir))
+areyousure = input('Type "YES" if you are sure you want to do this: ')
+
 # everything
-recursivereload(datadir)
+
+if areyousure == 'YES':
+	# print('nuking')
+	recursivereload(datadir)
+else:
+	print()
+	print('"{x}" is not "YES"'.format(x=areyousure))
+	print('Aborting. Current installation unmodified')
 
 # support only
 # recursivereload(datadir+'/supportdbs/')
