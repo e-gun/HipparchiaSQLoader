@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #!../bin/python
 """
 	HipparchiaSQLoader: archive and restore a database of Greek and Latin texts
