@@ -18,6 +18,7 @@ SET search_path = public, pg_catalog;
 
 DROP INDEX public.gr0001_st_trgm_idx;
 DROP INDEX public.gr0001_mu_trgm_idx;
+ALTER TABLE ONLY public.gr0001 DROP CONSTRAINT gr0001_index_key;
 DROP TABLE public.gr0001;
 SET search_path = public, pg_catalog;
 
@@ -47,6 +48,14 @@ CREATE TABLE gr0001 (
 
 
 ALTER TABLE gr0001 OWNER TO hippa_wr;
+
+--
+-- Name: gr0001 gr0001_index_key; Type: CONSTRAINT; Schema: public; Owner: hippa_wr
+--
+
+ALTER TABLE ONLY gr0001
+    ADD CONSTRAINT gr0001_index_key UNIQUE (index);
+
 
 --
 -- Name: gr0001_mu_trgm_idx; Type: INDEX; Schema: public; Owner: hippa_wr
