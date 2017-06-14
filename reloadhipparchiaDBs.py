@@ -48,7 +48,7 @@ def resetdb(tablename, templatetablename, templatefilename, cursor):
 
 	querylines = loadschemafromfile(tablename, templatetablename, templatefilename)
 	querylines = [q for q in querylines if q and re.search(r'^--',q) is None]
-	querylines = [re.sub(r'DROP (.*?)public',r'DROP \1 IF EXISTS public',q) for q in querylines]
+	querylines = [re.sub(r'(ALTER|DROP) (TABLE|INDEX) ', r'/1 /2 IF EXISTS ',q) for q in querylines]
 
 	corequery = [q for q in querylines if re.search(r',$',q) or re.search(r'CREATE TABLE',q) or re.search(r'[^;]$',q) or q == ');']
 
