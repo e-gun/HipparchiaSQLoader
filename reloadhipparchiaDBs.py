@@ -65,11 +65,8 @@ def resetdb(tablename, templatetablename, templatefilename, cursor):
 
 	for q in othersql:
 		if q != 'padding':
-			try:
-				cursor.execute(q)
-			except:
-				# psycopg2.ProgrammingError: relation "public.ch0001" does not exist
-				pass
+			cursor.execute(q)
+
 		elif tablecreated is False:
 			cursor.execute(corequery)
 			tablecreated = True
