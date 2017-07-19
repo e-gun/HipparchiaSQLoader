@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.6.2
--- Dumped by pg_dump version 9.6.2
+-- Dumped from database version 9.6.3
+-- Dumped by pg_dump version 9.6.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -31,7 +31,7 @@ SET default_with_oids = false;
 CREATE TABLE latin_dictionary (
     entry_name character varying(64),
     metrical_entry character varying(64),
-    id_number character varying(8),
+    id_number integer,
     entry_type character varying(8),
     entry_key character varying(64),
     entry_options "char",

@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.6.2
--- Dumped by pg_dump version 9.6.2
+-- Dumped from database version 9.6.3
+-- Dumped by pg_dump version 9.6.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -53,7 +53,8 @@ ALTER TABLE gr0001 OWNER TO hippa_wr;
 -- Name: gr0001 gr0001_index_key; Type: CONSTRAINT; Schema: public; Owner: hippa_wr
 --
 
-ALTER TABLE ONLY gr0001 ADD CONSTRAINT gr0001_index_key UNIQUE (index);
+ALTER TABLE ONLY gr0001
+    ADD CONSTRAINT gr0001_index_key UNIQUE (index);
 
 
 --
