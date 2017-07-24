@@ -35,6 +35,7 @@ CREATE TABLE greek_dictionary (
     id_number integer,
     entry_type character varying(8),
     entry_options "char",
+    translations text,
     entry_body text
 );
 

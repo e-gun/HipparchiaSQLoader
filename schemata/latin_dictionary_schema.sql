@@ -35,6 +35,7 @@ CREATE TABLE latin_dictionary (
     entry_type character varying(8),
     entry_key character varying(64),
     entry_options "char",
+    translations text,
     entry_body text
 );
 
