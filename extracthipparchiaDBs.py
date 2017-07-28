@@ -28,14 +28,11 @@ def fetchit(dbname, dbstructurelist, cursor):
 	:param cursor:
 	:return:
 	"""
+
+	selectlist = [label[0] for label in dbstructurelist]
+	selectstring = ','.join(selectlist)
 	
-	
-	slectstring = ''
-	for label in dbstructurelist:
-		slectstring += label[0]+','
-	slectstring = slectstring[:-1]
-	
-	q = 'SELECT '+slectstring+' from '+dbname
+	q = 'SELECT {s} FROM {d}'.format(s=selectstring, d=dbname)
 	cursor.execute(q)
 	results = cursor.fetchall()
 
