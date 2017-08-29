@@ -43,9 +43,12 @@ def pickleprep(dbname, dbstructurelist, dbcontents):
 	"""
 	take the fetchaller results and pickle them
 	:param dbname:
+	:param dbstructurelist:
+	:param dbcontents:
 	:return:
 	"""
-	pickleddb = {}
+
+	pickleddb = dict()
 	pickleddb['dbname'] = dbname
 	pickleddb['structure'] = dbstructurelist
 	pickleddb['data'] = dbcontents
@@ -64,7 +67,7 @@ def storeit(location, pickleddb):
 	#with open(location, 'wb') as f:
 	#	pickle.dump(pickleddb, f)
 	
-	f = gzip.open(location,'wb')
+	f = gzip.open(location, 'wb')
 	pickle.dump(pickleddb, f, pickle.HIGHEST_PROTOCOL)
 	f.close()
 	
@@ -110,7 +113,11 @@ def archivesupportdbs(location):
 
 def archivesingleauthor(db, structure, location, cursor):
 	"""
+
 	pickle and save a single work
+
+	:param db:
+	:param structure:
 	:param location:
 	:param cursor:
 	:return:
@@ -164,8 +171,10 @@ def archiveallauthors(location, authordbstructure):
 	jobs = [Process(target=mpauthorarchiver, args=(count, location, intermediatedir, authordbstructure, authors)) for i in
 	        range(workers)]
 	
-	for j in jobs: j.start()
-	for j in jobs: j.join()
+	for j in jobs:
+		j.start()
+	for j in jobs:
+		j.join()
 	
 	return
 
@@ -202,7 +211,7 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 
 		count.increment()
 		if count.value % 250 == 0:
-			print('\t',str(count.value) + ' databases extracted')
+			print('\t', str(count.value) + ' databases extracted')
 
 	dbc.commit()
 	del dbc
@@ -212,7 +221,7 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 
 testresults = templatetest()
 if 0 in testresults:
-	print('aborting:',testresults[0],'is not a DB version I can extract')
+	print('aborting:', testresults[0], 'is not a DB version I can extract')
 else:
 	print('archiving support dbs')
 	archivesupportdbs(datadir)
