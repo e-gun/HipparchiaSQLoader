@@ -1,4 +1,4 @@
-# !../bin/python
+#!../bin/python
 """
 	HipparchiaSQLoader: archive and restore a database of Greek and Latin texts
 	Copyright: E Gunderson 2016-17
