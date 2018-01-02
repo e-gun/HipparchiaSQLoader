@@ -120,8 +120,8 @@ def loadcolumnsfromfile(filename):
 	while re.search(columnfinder, thisline) is None:
 		thisline = schemalines.popleft()
 
-	columns = []
-	while re.search(r'^\);',thisline) is None:
+	columns = list()
+	while re.search(r'^\);', thisline) is None:
 		thisline = schemalines.popleft()
 		columns.append(thisline)
 

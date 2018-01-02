@@ -12,3 +12,6 @@ for table in authors gr0001 builderversion dictionary_headword_wordcounts greek_
 do 
 	$PGDUMP -c -s -t $table $DB > $OUTDIR/${table}_schema.sql
 done
+
+# look out for the following getting split onto TWO lines. It needs to be on one:
+#   ALTER TABLE ONLY gr0001 ADD CONSTRAINT gr0001_index_key UNIQUE (index);

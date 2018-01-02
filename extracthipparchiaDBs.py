@@ -23,8 +23,11 @@ schemadir = config['io']['schemadir']
 
 def fetchit(dbname, dbstructurelist, cursor):
 	"""
+
 	pull everything from a db
+
 	:param dbname:
+	:param dbstructurelist:
 	:param cursor:
 	:return:
 	"""
@@ -90,7 +93,7 @@ def archivesupportdbs(location):
 		
 	suffix = '.pickle.gz'
 
-	dbs = {}
+	dbs = dict()
 	for item in ['authors', 'works', 'greek_dictionary', 'latin_dictionary', 'greek_lemmata', 'latin_lemmata',
 	             'greek_morphology', 'latin_morphology', 'builderversion', 'dictionary_headword_wordcounts']:
 		dbs[item] = loadcolumnsfromfile(schemadir+item+'_schema.sql')
@@ -103,10 +106,10 @@ def archivesupportdbs(location):
 		dbs['wordcounts_'+l] = strwordcount
 
 	for db in dbs:
-		dbcontents = fetchit(db,dbs[db],cur)
+		dbcontents = fetchit(db, dbs[db], cur)
 		dbc.commit()
 		pickleddb = pickleprep(db, dbs[db], dbcontents)
-		storeit(location+intermediatedir+db+suffix,pickleddb)
+		storeit(location+intermediatedir+db+suffix, pickleddb)
 	
 	return
 
@@ -166,7 +169,7 @@ def archiveallauthors(location, authordbstructure):
 	authors = manager.list(authorids)
 	workers = int(config['io']['workers'])
 
-	print(len(authorids),'author databases to extract')
+	print(len(authorids), 'author databases to extract')
 
 	jobs = [Process(target=mpauthorarchiver, args=(count, location, intermediatedir, authordbstructure, authors)) for i in
 	        range(workers)]
@@ -182,7 +185,12 @@ def archiveallauthors(location, authordbstructure):
 def mpauthorarchiver(count, location, intermediatedir, authordbstructure, authors):
 	"""
 	share the archiving work
-	:param authorlist:
+
+	:param count:
+	:param location:
+	:param intermediatedir:
+	:param authordbstructure:
+	:param authors:
 	:return:
 	"""
 	
@@ -190,15 +198,16 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 	cur = dbc.cursor()
 	
 	while len(authors) > 0:
-		try: a = authors.pop()
-		except: a = 'gr0000'
-
+		try:
+			a = authors.pop()
+		except IndexError:
+			a = 'gr0000'
 
 		langdir = location + intermediatedir
 		if not os.path.exists(langdir + a[0:2] + '/' + a[0:4] + '/'):
 			try:
 				os.makedirs(langdir + a[0:2] + '/' + a[0:4] + '/')
-			except:
+			except FileExistsError:
 				# FileExistsError: [Errno 17] File exists:
 				# MP means a race to create
 				pass

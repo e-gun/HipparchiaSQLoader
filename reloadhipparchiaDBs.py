@@ -56,7 +56,7 @@ def resetdb(tablename, templatetablename, templatefilename, cursor):
 	             or re.search(r'[^;]$', q)
 	             or q == ');']
 
-	othersql = []
+	othersql = list()
 	for q in querylines:
 		if re.search(r';$', q) and q not in corequery:
 			othersql.append(q)
@@ -158,13 +158,13 @@ def buildfilesearchlist(datadir, memory):
 		elif suffix in entry.name:
 			memory.append(entry)
 
-	entries = []
+	entries = list()
 	pickles = re.compile(r'\.pickle\.gz$')
 	for m in memory:
 		if re.search(pickles, m.path):
 			entries.append(m)
 
-	paths = []
+	paths = list()
 	for e in entries:
 		paths.append(e.path)
 
@@ -180,7 +180,7 @@ def recursivereload(datadir):
 	dbc = setconnection(config)
 	cur = dbc.cursor()
 
-	structures = {}
+	structures = dict()
 	for item in ['authors', 'works', 'greek_dictionary', 'latin_dictionary', 'greek_lemmata', 'latin_lemmata',
 	             'greek_morphology', 'latin_morphology', 'builderversion', 'dictionary_headword_wordcounts']:
 		structures[item] = loadcolumnsfromfile(schemadir+item+'_schema.sql')
@@ -212,7 +212,7 @@ def recursivereload(datadir):
 		elif re.search(authorfinder, nm):
 			resetdb(nm, 'gr0001', schemadir+'gr0001_schema.sql', cur)
 		if count % 500 == 0:
-			print(count,'dbs reset')
+			print(count, 'dbs reset')
 			dbc.commit()
 	dbc.commit()
 
@@ -237,15 +237,12 @@ def mpreloader(dbs, count, totaldbs):
 	:return:
 	"""
 
-	dbc = setconnection(config)
-	cur = dbc.cursor()
-
 	while len(dbs) > 0:
 		try:
 			db = dbs.pop()
 			dbcontents = retrievedb(db)
-		except:
-			dbcontents = {}
+		except IndexError:
+			dbcontents = dict()
 			dbcontents['dbname'] = ''
 
 		count.increment()
@@ -254,9 +251,6 @@ def mpreloader(dbs, count, totaldbs):
 
 		if dbcontents['dbname'] != '':
 			reloadwhoeldb(dbcontents)
-
-	dbc.commit()
-	del dbc
 
 	return
 
