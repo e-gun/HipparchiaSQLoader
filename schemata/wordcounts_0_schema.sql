@@ -16,7 +16,6 @@ SET row_security = off;
 
 SET search_path = public, pg_catalog;
 
-DROP INDEX public.wcindex_0;
 DROP TABLE public.wordcounts_0;
 SET search_path = public, pg_catalog;
 
@@ -40,13 +39,6 @@ CREATE TABLE wordcounts_0 (
 
 
 ALTER TABLE wordcounts_0 OWNER TO hippa_wr;
-
---
--- Name: wcindex_0; Type: INDEX; Schema: public; Owner: hippa_wr
---
-
-CREATE UNIQUE INDEX wcindex_0 ON wordcounts_0 USING btree (entry_name);
-
 
 --
 -- Name: wordcounts_0; Type: ACL; Schema: public; Owner: hippa_wr

@@ -31,7 +31,7 @@ SET default_with_oids = false;
 CREATE TABLE latin_lemmata (
     dictionary_entry character varying(64),
     xref_number integer,
-    derivative_forms text
+    derivative_forms text[]
 );
 
 
