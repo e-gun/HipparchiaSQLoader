@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.1
--- Dumped by pg_dump version 10.1
+-- Dumped from database version 10.2
+-- Dumped by pg_dump version 10.2
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -54,7 +54,7 @@ CREATE TABLE works (
 ALTER TABLE works OWNER TO hippa_wr;
 
 --
--- Name: works; Type: ACL; Schema: public; Owner: hippa_wr
+-- Name: TABLE works; Type: ACL; Schema: public; Owner: hippa_wr
 --
 
 GRANT SELECT ON TABLE works TO hippa_rd;

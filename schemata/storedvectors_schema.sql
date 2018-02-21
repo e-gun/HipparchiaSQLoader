@@ -16,7 +16,7 @@ SET row_security = off;
 
 SET search_path = public, pg_catalog;
 
-DROP TABLE public.builderversion;
+DROP TABLE public.storedvectors;
 SET search_path = public, pg_catalog;
 
 SET default_tablespace = '';
@@ -24,23 +24,25 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: builderversion; Type: TABLE; Schema: public; Owner: hippa_wr
+-- Name: storedvectors; Type: TABLE; Schema: public; Owner: hippa_wr
 --
 
-CREATE TABLE builderversion (
-    templateversion integer,
-    corpusname character varying(2),
-    corpusbuilddate character varying(20)
+CREATE TABLE storedvectors (
+    ts timestamp without time zone,
+    versionstamp character varying(6),
+    uidlist text[],
+    vectortype character varying(10),
+    calculatedvectorspace bytea
 );
 
 
-ALTER TABLE builderversion OWNER TO hippa_wr;
+ALTER TABLE storedvectors OWNER TO hippa_wr;
 
 --
--- Name: TABLE builderversion; Type: ACL; Schema: public; Owner: hippa_wr
+-- Name: TABLE storedvectors; Type: ACL; Schema: public; Owner: hippa_wr
 --
 
-GRANT SELECT ON TABLE builderversion TO hippa_rd;
+GRANT SELECT ON TABLE storedvectors TO hippa_rd;
 
 
 --

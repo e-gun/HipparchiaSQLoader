@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.1
--- Dumped by pg_dump version 10.1
+-- Dumped from database version 10.2
+-- Dumped by pg_dump version 10.2
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -71,7 +71,7 @@ CREATE INDEX gr0001_st_trgm_idx ON gr0001 USING gin (stripped_line gin_trgm_ops)
 
 
 --
--- Name: gr0001; Type: ACL; Schema: public; Owner: hippa_wr
+-- Name: TABLE gr0001; Type: ACL; Schema: public; Owner: hippa_wr
 --
 
 GRANT SELECT ON TABLE gr0001 TO hippa_rd;

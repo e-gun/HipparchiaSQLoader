@@ -14,7 +14,7 @@ from collections import deque
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-sqltemplateversion = 7242017
+sqltemplateversion = 1082018
 
 
 def setconnection(config):
