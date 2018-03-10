@@ -112,6 +112,58 @@ def reloadwhoeldb(dbcontents):
 	return
 
 
+def unnestreloader(dbcontents):
+	"""
+
+	https://trvrm.github.io/bulk-psycopg2-inserts.html
+
+	not working yet....
+
+	File "./reloadhipparchiaDBs.py", line 149, in unnestreloader
+	splitdata[i] = [d[i] for d in data]
+	IndexError: list assignment index out of range
+
+	:param dbcontents:
+	:return:
+	"""
+
+	dbc = setconnection(config)
+	cur = dbc.cursor()
+
+	dbname = dbcontents['dbname']
+	structure = dbcontents['structure']
+	data = dbcontents['data']
+
+	columns = len(structure)
+	structure = [s[0] for s in structure]
+	structure = ', '.join(structure)
+
+	query = '''
+		INSERT INTO {db} ({s})
+		SELECT {un}
+	'''
+
+	unnester = list()
+	for i in range(columns):
+		unnester.append('unnest ( %({var}[i])s )'.format(var='splitdata', i=i))
+	unnester = ', '.join(unnester)
+
+	query = query.format(db=dbname, s=structure, un=unnester)
+
+	splitdata = list()
+	for i in range(columns):
+		splitdata[i] = [d[i] for d in data]
+
+	data = tuple([splitdata[i] for i in range(columns)])
+
+	cur.execute(query, data)
+
+	dbc.commit()
+	del dbc
+
+	return
+
+
 def reloadoneline(insertdata, dbname, dbstructurelist, cursor):
 	"""
 	restore everything to a db
@@ -258,6 +310,7 @@ def mpreloader(dbs, count, totaldbs):
 
 		if dbcontents['dbname'] != '':
 			reloadwhoeldb(dbcontents)
+			# unnestreloader(dbcontents)
 
 	return
 

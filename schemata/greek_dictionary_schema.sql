@@ -33,8 +33,7 @@ CREATE TABLE greek_dictionary (
     metrical_entry character varying(64),
     unaccented_entry character varying(64),
     id_number integer,
-    entry_type character varying(8),
-    entry_options "char",
+    pos character varying(64),
     translations text,
     entry_body text
 );
