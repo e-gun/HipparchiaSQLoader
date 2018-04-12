@@ -278,7 +278,7 @@ def recursivereload(datadir):
 	dbc.commit()
 
 	print('beginning to reload the tables: {d} found'.format(d=totaldbs))
-	print('[NB: the lengths very considerably; not every 10% chunk will load as swiftly as did its peers...]')
+	print('[NB: the lengths vary considerably; not every 10% chunk will load as swiftly as did its peers...]')
 	manager = Manager()
 	count = MPCounter()
 	dbs = manager.list(dbpaths)
