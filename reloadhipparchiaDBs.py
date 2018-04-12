@@ -6,12 +6,13 @@
 		(see LICENSE in the top level directory of the distribution)
 """
 
-import pickle
 import gzip
-import os
 import io
+import os
+import pickle
+from multiprocessing import Manager, Process
+
 from dbhelpers import *
-from multiprocessing import Process, Manager
 from dbhelpers import MPCounter
 
 config = configparser.ConfigParser()

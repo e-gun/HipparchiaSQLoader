@@ -6,13 +6,14 @@
 		(see LICENSE in the top level directory of the distribution)
 """
 
+import configparser
+import random
+import threading
+
 import psycopg2
 import psycopg2.pool as connectionpool
-import threading
-import random
-import configparser
-from workers import setworkercount
 
+from workers import setworkercount
 
 config = configparser.ConfigParser()
 config.read('config.ini')

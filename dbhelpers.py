@@ -6,11 +6,9 @@
 		(see LICENSE in the top level directory of the distribution)
 """
 
-import re
-import psycopg2
 import configparser
+import re
 from collections import deque
-
 from multiprocessing import Value
 
 from connection import setconnection
