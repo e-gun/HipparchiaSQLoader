@@ -216,7 +216,8 @@ def recursivereload(datadir):
 			dbc.commit()
 	dbc.commit()
 
-	print('beginning to reload the databases:', totaldbs, 'found')
+	print('beginning to reload the tables: {d} found'.format(d=totaldbs))
+	print('[NB: the lengths very considerably; not every 10% chunk will load as swiftly as did its peers...]')
 	manager = Manager()
 	count = MPCounter()
 	dbs = manager.list(dbpaths)
@@ -257,7 +258,7 @@ def mpreloader(dbs, count, totaldbs, dbconnection):
 		count.increment()
 		if count.value % progresschunks == 0:
 			percent = int(round((count.value / totaldbs) * 100, 0))
-			print('\t {p}% of the databases have been restored ({a}/{b})'.format(p=percent, a=count.value, b=totaldbs))
+			print('\t {p}% of the tables have been restored ({a}/{b})'.format(p=percent, a=count.value, b=totaldbs))
 
 		if dbcontents['dbname'] != '':
 			reloadwhoeldb(dbcontents, dbconnection)
