@@ -12,6 +12,8 @@ import os
 import pickle
 from multiprocessing import Manager, Process
 
+import psycopg2
+
 from dbhelpers import *
 from dbhelpers import MPCounter
 
@@ -106,10 +108,24 @@ def reloadwhoeldb(dbcontents, dbconnection):
 	structure = dbcontents['structure']
 	data = dbcontents['data']
 
-	columns = [s[0] for s in structure]
-	stream = generatecopystream(data, separator=separator)
-	dbcursor.copy_from(stream, table, sep=separator, columns=columns)
-
+	if table[0:2] in ['gr', 'lt', 'in', 'ch', 'dp']:
+		# there are tabs in the greek dictionary
+		# you can have "None" in a wordcount instead of an integer
+		columns = [s[0] for s in structure]
+		stream = generatecopystream(data, separator=separator)
+		dbcursor.copy_from(stream, table, sep=separator, columns=columns)
+	else:
+		dbconnection.setdefaultisolation()
+		count = 1
+		for line in data:
+			count += 1
+			# 32k is the limit?
+			if count % 5000 == 0:
+				dbconnection.commit()
+			if count % 50000 == 0:
+				print('\t\tlongdb: {t} [ @ line {c}]'.format(t=table, c=count))
+			reloadoneline(line, table, structure, dbcursor)
+		dbconnection.commit()
 	return
 
 
@@ -134,6 +150,37 @@ def generatecopystream(queryvaluetuples, separator='\t'):
 	copystream.seek(0)
 
 	return copystream
+
+
+def reloadoneline(insertdata, dbname, dbstructurelist, cursor):
+	"""
+	restore everything to a db
+	remember that the db itself should have pickled it structure
+	and the values that came out then should still be tuples now
+	:param dbname:
+	:param cursor:
+	:return:
+	"""
+
+	insertstring = ' ('
+	insertvals = '('
+	for label in dbstructurelist:
+		insertstring += label[0] + ', '
+		insertvals += '%s, '
+
+	insertstring = insertstring[:-2] + ')'
+	insertvals = insertvals[:-2] + ')'
+
+	q = 'INSERT INTO {t} {i} VALUES {v}'.format(t=dbname, i=insertstring, v=insertvals)
+	d = insertdata
+
+	try:
+		cursor.execute(q, d)
+	except psycopg2.DatabaseError as e:
+		print('insert into ', dbname, 'failed at while attempting', d)
+		print('Error %s' % e)
+
+	return
 
 
 def buildfilesearchlist(datadir, memory):
