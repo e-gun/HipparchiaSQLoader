@@ -102,15 +102,29 @@ def reloadwhoeldb(dbcontents, dbconnection):
 
 	dbcursor = dbconnection.cursor()
 
-	separator = '\t'
+	# there are tabs in the greek dictionary: you can't use '\t' as the separator
+	# similarly you can't use a high-value junk separator because you are not allowd to use that many bits...
+	separator = chr(7)
 
 	table = dbcontents['dbname']
 	structure = dbcontents['structure']
 	data = dbcontents['data']
 
-	if table[0:2] in ['gr', 'lt', 'in', 'ch', 'dp'] and len(table) == 6:
-		# there are tabs in the greek dictionary
-		# you can have "None" in a wordcount instead of an integer
+	# the problems
+	# [a] *_lemmata
+	#   psycopg2.DataError: malformed array literal: "['ζῳοτύπον', 'ζωιοτύποϲ']"
+	#   DETAIL:  "[" must introduce explicitly-specified array dimensions.
+	# [b] *_morphology
+	#   [1] psycopg2.DataError: missing data for column "xrefs"
+	#   [2] psycopg2.DataError: value too long for type character varying(64)
+	# [c] authors and works
+	#   psycopg2.DataError: invalid input syntax for integer: "None"
+	#   CONTEXT:  COPY works, line 1, column converted_date: "None"
+
+	tests = ['lemmata', 'morphology', 'authors', 'works']
+	avoidcopyfrom = [t for t in tests if t in table]
+
+	if not avoidcopyfrom:
 		columns = [s[0] for s in structure]
 		stream = generatecopystream(data, separator=separator)
 		dbcursor.copy_from(stream, table, sep=separator, columns=columns)

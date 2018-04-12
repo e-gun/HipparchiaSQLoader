@@ -27,12 +27,12 @@ SET default_with_oids = false;
 
 CREATE TABLE public.wordcounts_0 (
     entry_name character varying(64),
-    total_count integer,
-    gr_count integer,
-    lt_count integer,
-    dp_count integer,
-    in_count integer,
-    ch_count integer
+    total_count integer DEFAULT 0,
+    gr_count integer DEFAULT 0,
+    lt_count integer DEFAULT 0,
+    dp_count integer DEFAULT 0,
+    in_count integer DEFAULT 0,
+    ch_count integer DEFAULT 0
 );
 
 
