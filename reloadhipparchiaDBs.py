@@ -124,6 +124,8 @@ def reloadwhoeldb(dbcontents, dbconnection):
 
 	tests = ['lemmata', 'morphology', 'authors', 'works', 'latin_dictionary']
 	avoidcopyfrom = [t for t in tests if t in table]
+	if config['io']['slowload'] == 'yes':
+		avoidcopyfrom = True
 
 	if not avoidcopyfrom:
 		columns = [s[0] for s in structure]
