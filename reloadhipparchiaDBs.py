@@ -256,7 +256,7 @@ def mpreloader(dbs, count, totaldbs, dbconnection):
 
 		count.increment()
 		if count.value % progresschunks == 0:
-			percent = round((count.value / totaldbs) * 100, 1)
+			percent = int(round((count.value / totaldbs) * 100, 0))
 			print('\t {p}% of the databases have been restored ({a}/{b})'.format(p=percent, a=count.value, b=totaldbs))
 
 		if dbcontents['dbname'] != '':
