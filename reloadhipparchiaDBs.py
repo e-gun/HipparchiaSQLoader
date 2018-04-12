@@ -108,7 +108,7 @@ def reloadwhoeldb(dbcontents, dbconnection):
 	structure = dbcontents['structure']
 	data = dbcontents['data']
 
-	if table[0:2] in ['gr', 'lt', 'in', 'ch', 'dp']:
+	if table[0:2] in ['gr', 'lt', 'in', 'ch', 'dp'] and len(table) == 6:
 		# there are tabs in the greek dictionary
 		# you can have "None" in a wordcount instead of an integer
 		columns = [s[0] for s in structure]
@@ -304,7 +304,7 @@ def mpreloader(dbs, count, totaldbs, dbconnection):
 
 		count.increment()
 		if count.value % progresschunks == 0:
-			percent = int(round((count.value / totaldbs) * 100, 0))
+			percent = round((count.value / totaldbs) * 100, 1)
 			print('\t {p}% of the tables have been restored ({a}/{b})'.format(p=percent, a=count.value, b=totaldbs))
 
 		if dbcontents['dbname'] != '':
