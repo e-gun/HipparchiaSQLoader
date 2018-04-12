@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 	HipparchiaSQLoader: archive and restore a database of Greek and Latin texts
-	Copyright: E Gunderson 2016-17
+	Copyright: E Gunderson 2016-18
 	License: GNU GENERAL PUBLIC LICENSE 3
 		(see LICENSE in the top level directory of the distribution)
 """
@@ -11,19 +11,14 @@ import psycopg2
 import configparser
 from collections import deque
 
+from multiprocessing import Value
+
+from connection import setconnection
+
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-sqltemplateversion = 1082018
-
-
-def setconnection(config):
-	dbconnection = psycopg2.connect(user=config['db']['DBUSER'], host=config['db']['DBHOST'],
-	                                port=config['db']['DBPORT'], database=config['db']['DBNAME'],
-	                                password=config['db']['DBPASS'])
-	# dbconnection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-	
-	return dbconnection
+sqltemplateversion = 2242018
 
 
 def templatetest():
@@ -34,7 +29,7 @@ def templatetest():
 	:return:
 	"""
 
-	dbc = setconnection(config)
+	dbc = setconnection()
 	cur = dbc.cursor()
 
 	q = 'SELECT templateversion FROM builderversion'
@@ -53,6 +48,8 @@ def templatetest():
 
 	testresults = {compatible: version}
 
+	dbc.connectioncleanup()
+
 	return testresults
 
 
@@ -66,7 +63,7 @@ def knowncorpora():
 	:return:
 	"""
 
-	dbc = setconnection(config)
+	dbc = setconnection()
 	cur = dbc.cursor()
 
 	q = 'SELECT universalid FROM authors'
@@ -75,7 +72,7 @@ def knowncorpora():
 	ids = [x[0] for x in ids]
 	prefixes = set([id[0:2] for id in ids])
 
-	dbc.commit()
+	dbc.connectioncleanup()
 
 	return prefixes
 
@@ -131,3 +128,16 @@ def loadcolumnsfromfile(filename):
 	columns = [(c.split(' ')[0], ' '.join(c.split(' ')[1:])) for c in columns]
 
 	return columns
+
+
+class MPCounter(object):
+	def __init__(self):
+		self.val = Value('i', 0)
+
+	def increment(self, n=1):
+		with self.val.get_lock():
+			self.val.value += n
+
+	@property
+	def value(self):
+		return self.val.value

@@ -1,18 +1,19 @@
 #!../bin/python
 """
 	HipparchiaSQLoader: archive and restore a database of Greek and Latin texts
-	Copyright: E Gunderson 2016-17
+	Copyright: E Gunderson 2016-18
 	License: GNU GENERAL PUBLIC LICENSE 3
 		(see LICENSE in the top level directory of the distribution)
 """
 
-import pickle
 import gzip
 import os
-from dbhelpers import *
-from multiprocessing import Process, Manager
-from mpclass import MPCounter
+import pickle
+from multiprocessing import Manager, Process
 
+from dbhelpers import *
+from dbhelpers import MPCounter
+from workers import setworkercount
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -85,8 +86,8 @@ def archivesupportdbs(location):
 	:return:
 	"""
 
-	dbc = setconnection(config)
-	cur = dbc.cursor()
+	dbconnection = setconnection()
+	dbcursor = dbconnection.cursor()
 
 	intermediatedir = 'supportdbs/'
 	if not os.path.exists(location + intermediatedir):
@@ -113,10 +114,12 @@ def archivesupportdbs(location):
 		dbs['wordcounts_'+l] = strwordcount
 
 	for db in dbs:
-		dbcontents = fetchit(db, dbs[db], cur)
-		dbc.commit()
+		dbcontents = fetchit(db, dbs[db], dbcursor)
+		dbconnection.commit()
 		pickleddb = pickleprep(db, dbs[db], dbcontents)
 		storeit(location+intermediatedir+db+suffix, pickleddb)
+
+	dbconnection.connectioncleanup()
 	
 	return
 
@@ -151,8 +154,8 @@ def archiveallauthors(location, authordbstructure):
 	:return:
 	"""
 
-	dbc = setconnection(config)
-	cur = dbc.cursor()
+	dbconnection = setconnection(config)
+	dbcursor = dbconnection.cursor()
 
 	intermediatedir = 'authordbs/'
 	if not os.path.exists(location + intermediatedir):
@@ -166,30 +169,35 @@ def archiveallauthors(location, authordbstructure):
 
 	# a more interesting set of queries could output things like 5th c prose
 	q = 'SELECT universalid FROM authors ORDER BY universalid'
-	cur.execute(q)
-	authorids = cur.fetchall()
+	dbcursor.execute(q)
+	authorids = dbcursor.fetchall()
 	authorids = [a[0] for a in authorids]
-	dbc.commit()
+	dbconnection.commit()
 
 	manager = Manager()
 	count = MPCounter()
 	authors = manager.list(authorids)
-	workers = int(config['io']['workers'])
+	workers = setworkercount()
+
+	connections = {i: setconnection() for i in range(workers)}
 
 	print(len(authorids), 'author databases to extract')
 
-	jobs = [Process(target=mpauthorarchiver, args=(count, location, intermediatedir, authordbstructure, authors)) for i in
+	jobs = [Process(target=mpauthorarchiver, args=(count, location, intermediatedir, authordbstructure, authors, connections[i])) for i in
 	        range(workers)]
 	
 	for j in jobs:
 		j.start()
 	for j in jobs:
 		j.join()
-	
+
+	for c in connections:
+		connections[c].connectioncleanup()
+
 	return
 
 
-def mpauthorarchiver(count, location, intermediatedir, authordbstructure, authors):
+def mpauthorarchiver(count, location, intermediatedir, authordbstructure, authors, dbconnection):
 	"""
 	share the archiving work
 
@@ -200,38 +208,36 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 	:param authors:
 	:return:
 	"""
-	
-	dbc = setconnection(config)
-	cur = dbc.cursor()
+
+	dbcursor = dbconnection.cursor()
 	
 	while len(authors) > 0:
 		try:
-			a = authors.pop()
+			au = authors.pop()
 		except IndexError:
-			a = 'gr0000'
+			au = 'gr0000'
 
 		langdir = location + intermediatedir
-		if not os.path.exists(langdir + a[0:2] + '/' + a[0:4] + '/'):
+		if not os.path.exists(langdir + au[0:2] + '/' + au[0:4] + '/'):
 			try:
-				os.makedirs(langdir + a[0:2] + '/' + a[0:4] + '/')
+				os.makedirs(langdir + au[0:2] + '/' + au[0:4] + '/')
 			except FileExistsError:
 				# FileExistsError: [Errno 17] File exists:
 				# MP means a race to create
 				pass
-		dbloc = langdir + a[0:2] + '/' + a[0:4] + '/'
+		dbloc = langdir + au[0:2] + '/' + au[0:4] + '/'
 
-		if a != 'gr0000':
-			archivesingleauthor(a, authordbstructure, dbloc, cur)
+		if au != 'gr0000':
+			archivesingleauthor(au, authordbstructure, dbloc, dbcursor)
 
-		dbc.commit()
+		dbconnection.commit()
 
 		count.increment()
 		if count.value % 250 == 0:
 			print('\t', str(count.value) + ' databases extracted')
 
-	dbc.commit()
-	del dbc
-	
+	dbconnection.commit()
+
 	return
 
 

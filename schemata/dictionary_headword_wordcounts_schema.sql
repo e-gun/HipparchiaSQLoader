@@ -2,24 +2,21 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.2
--- Dumped by pg_dump version 10.2
+-- Dumped from database version 10.3
+-- Dumped by pg_dump version 10.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
-SET search_path = public, pg_catalog;
-
 DROP INDEX public.wcindexts;
 DROP TABLE public.dictionary_headword_wordcounts;
-SET search_path = public, pg_catalog;
-
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -28,7 +25,7 @@ SET default_with_oids = false;
 -- Name: dictionary_headword_wordcounts; Type: TABLE; Schema: public; Owner: hippa_wr
 --
 
-CREATE TABLE dictionary_headword_wordcounts (
+CREATE TABLE public.dictionary_headword_wordcounts (
     entry_name character varying(64),
     total_count integer,
     gr_count integer,
@@ -120,20 +117,20 @@ CREATE TABLE dictionary_headword_wordcounts (
 );
 
 
-ALTER TABLE dictionary_headword_wordcounts OWNER TO hippa_wr;
+ALTER TABLE public.dictionary_headword_wordcounts OWNER TO hippa_wr;
 
 --
 -- Name: wcindexts; Type: INDEX; Schema: public; Owner: hippa_wr
 --
 
-CREATE UNIQUE INDEX wcindexts ON dictionary_headword_wordcounts USING btree (entry_name);
+CREATE UNIQUE INDEX wcindexts ON public.dictionary_headword_wordcounts USING btree (entry_name);
 
 
 --
 -- Name: TABLE dictionary_headword_wordcounts; Type: ACL; Schema: public; Owner: hippa_wr
 --
 
-GRANT SELECT ON TABLE dictionary_headword_wordcounts TO hippa_rd;
+GRANT SELECT ON TABLE public.dictionary_headword_wordcounts TO hippa_rd;
 
 
 --

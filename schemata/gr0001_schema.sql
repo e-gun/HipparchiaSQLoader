@@ -2,26 +2,23 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.2
--- Dumped by pg_dump version 10.2
+-- Dumped from database version 10.3
+-- Dumped by pg_dump version 10.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
-
-SET search_path = public, pg_catalog;
 
 DROP INDEX public.gr0001_st_trgm_idx;
 DROP INDEX public.gr0001_mu_trgm_idx;
 ALTER TABLE ONLY public.gr0001 DROP CONSTRAINT gr0001_index_key;
 DROP TABLE public.gr0001;
-SET search_path = public, pg_catalog;
-
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -30,8 +27,8 @@ SET default_with_oids = false;
 -- Name: gr0001; Type: TABLE; Schema: public; Owner: hippa_wr
 --
 
-CREATE TABLE gr0001 (
-    index integer DEFAULT nextval('gr0001'::regclass) NOT NULL,
+CREATE TABLE public.gr0001 (
+    index integer DEFAULT nextval('public.gr0001'::regclass) NOT NULL,
     wkuniversalid character varying(10),
     level_05_value character varying(64),
     level_04_value character varying(64),
@@ -47,34 +44,34 @@ CREATE TABLE gr0001 (
 );
 
 
-ALTER TABLE gr0001 OWNER TO hippa_wr;
+ALTER TABLE public.gr0001 OWNER TO hippa_wr;
 
 --
 -- Name: gr0001 gr0001_index_key; Type: CONSTRAINT; Schema: public; Owner: hippa_wr
 --
 
-ALTER TABLE ONLY gr0001 ADD CONSTRAINT gr0001_index_key UNIQUE (index);
+ALTER TABLE ONLY public.gr0001 ADD CONSTRAINT gr0001_index_key UNIQUE (index);
 
 
 --
 -- Name: gr0001_mu_trgm_idx; Type: INDEX; Schema: public; Owner: hippa_wr
 --
 
-CREATE INDEX gr0001_mu_trgm_idx ON gr0001 USING gin (accented_line gin_trgm_ops);
+CREATE INDEX gr0001_mu_trgm_idx ON public.gr0001 USING gin (accented_line public.gin_trgm_ops);
 
 
 --
 -- Name: gr0001_st_trgm_idx; Type: INDEX; Schema: public; Owner: hippa_wr
 --
 
-CREATE INDEX gr0001_st_trgm_idx ON gr0001 USING gin (stripped_line gin_trgm_ops);
+CREATE INDEX gr0001_st_trgm_idx ON public.gr0001 USING gin (stripped_line public.gin_trgm_ops);
 
 
 --
 -- Name: TABLE gr0001; Type: ACL; Schema: public; Owner: hippa_wr
 --
 
-GRANT SELECT ON TABLE gr0001 TO hippa_rd;
+GRANT SELECT ON TABLE public.gr0001 TO hippa_rd;
 
 
 --

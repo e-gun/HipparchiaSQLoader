@@ -1,1 +1,1 @@
-__all__ = ['mpclass', 'dbhelpers']
+__all__ = ['dbhelpers']

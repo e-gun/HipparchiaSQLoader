@@ -1,7 +1,7 @@
 #!../bin/python
 """
 	HipparchiaSQLoader: archive and restore a database of Greek and Latin texts
-	Copyright: E Gunderson 2016-17
+	Copyright: E Gunderson 2016-18
 	License: GNU GENERAL PUBLIC LICENSE 3
 		(see LICENSE in the top level directory of the distribution)
 """
@@ -9,9 +9,10 @@
 import pickle
 import gzip
 import os
+import io
 from dbhelpers import *
 from multiprocessing import Process, Manager
-from mpclass import MPCounter
+from dbhelpers import MPCounter
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -81,7 +82,7 @@ def resetdb(tablename, templatetablename, templatefilename, cursor):
 	return
 
 
-def reloadwhoeldb(dbcontents):
+def xreloadwhoeldb(dbcontents, dbconnection):
 	"""
 	the pickle package itself should tell you all you need to know to call reloadoneline() repeatedly
 	note that the dbname is stored in the file and need not be derived from the filename itself
@@ -89,8 +90,7 @@ def reloadwhoeldb(dbcontents):
 	:return:
 	"""
 
-	dbc = setconnection(config)
-	cur = dbc.cursor()
+	cur = dbconnection.cursor()
 
 
 	dbname = dbcontents['dbname']
@@ -102,14 +102,67 @@ def reloadwhoeldb(dbcontents):
 		count += 1
 		# 32k is the limit?
 		if count % 5000 == 0:
-			dbc.commit()
+			dbconnection.commit()
 		if count % 50000 == 0:
 			print('\t\tlongdb: ', dbname, '[ @ line ', count, ']')
 		reloadoneline(line, dbname, structure, cur)
 
-	dbc.commit()
+	dbconnection.commit()
 
 	return
+
+
+def reloadwhoeldb(dbcontents, dbconnection):
+	"""
+	the pickle package itself should tell you all you need to know to call reloadoneline() repeatedly
+	note that the dbname is stored in the file and need not be derived from the filename itself
+
+	example:
+
+	struct [('index', "integer DEFAULT nextval('public.gr0001'::regclass) NOT NULL"), ('wkuniversalid', 'character varying(10)'), ('level_05_value', 'character varying(64)'), ('level_04_value', 'character varying(64)'), ('level_03_value', 'character varying(64)'), ('level_02_value', 'character varying(64)'), ('level_01_value', 'character varying(64)'), ('level_00_value', 'character varying(64)'), ('marked_up_line', 'text'), ('accented_line', 'text'), ('stripped_line', 'text'), ('hyphenated_words', 'character varying(128)'), ('annotations', 'character varying(256)')]
+
+	data[:4] [(1, 'lt9505w001', '-1', '-1', '-1', '-1', '-1', 't', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hmu_title">INCERTI NOMINIS RELIQVIAE</span>', 'incerti nominis reliqviae', 'incerti nominis reliquiae', '', ''), (2, 'lt9505w001', '-1', '-1', '-1', '-1', '-1', '1', '<hmu_metadata_notes value="Serv. Dan. &3A.& 11.160" />uictrices', 'uictrices', 'uictrices', '', ''), (3, 'lt9505w001', '-1', '-1', '-1', '-1', '-1', '2', '<hmu_metadata_notes value="Quint. &3Inst.& 5.11.24" />Quis⟨nam⟩ íste torquens fáciem planipedís senis? <hmu_standalone_endofpage />', 'quisnam íste torquens fáciem planipedís senis ', 'quisnam iste torquens faciem planipedis senis ', '', ''), (4, 'lt9505w002', '-1', '-1', '-1', '-1', '-1', 't', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hmu_title">INCERTI NOMINIS RELIQVIAE</span>', 'incerti nominis reliqviae', 'incerti nominis reliquiae', '', '')]
+
+	:param dbcontents:
+	:return:
+	"""
+
+	dbcursor = dbconnection.cursor()
+
+	separator = '\t'
+
+	table = dbcontents['dbname']
+	structure = dbcontents['structure']
+	data = dbcontents['data']
+
+	columns = [s[0] for s in structure]
+	stream = generatecopystream(data, separator=separator)
+	dbcursor.copy_from(stream, table, sep=separator, columns=columns)
+
+	return
+
+
+def generatecopystream(queryvaluetuples, separator='\t'):
+	"""
+	postgres inserts much faster via "COPY FROM"
+	prepare data to match the psychopg2.copy_from() interface
+	copy_from(file, table, sep='\t', null='\\N', size=8192, columns=None)
+		Read data from the file-like object file appending them to the table named table.
+	see the example at http://initd.org/psycopg/docs/cursor.html:
+		f = StringIO("42\tfoo\n74\tbar\n")
+		cur.copy_from(f, 'test', columns=('num', 'data'))
+	:param queryvaluetuples:
+	:return:
+	"""
+
+	copystream = io.StringIO()
+
+	for t in queryvaluetuples:
+		copystream.write(separator.join([str(x) for x in t]) + '\n')
+
+	copystream.seek(0)
+
+	return copystream
 
 
 def unnestreloader(dbcontents):
@@ -281,20 +334,29 @@ def recursivereload(datadir):
 	dbs = manager.list(dbpaths)
 	workers = int(config['io']['workers'])
 
-	jobs = [Process(target=mpreloader, args=(dbs, count, totaldbs)) for i in
+	connections = {i: setconnection(autocommit=True) for i in range(workers)}
+
+	jobs = [Process(target=mpreloader, args=(dbs, count, totaldbs, connections[i])) for i in
 			range(workers)]
 
-	for j in jobs: j.start()
-	for j in jobs: j.join()
+	for j in jobs:
+		j.start()
+	for j in jobs:
+		j.join()
+
+	for c in connections:
+		connections[c].connectioncleanup()
 
 	return
 
 
-def mpreloader(dbs, count, totaldbs):
+def mpreloader(dbs, count, totaldbs, dbconnection):
 	"""
 	mp reader reloader
 	:return:
 	"""
+
+	progresschunks = int(len(totaldbs) / 10)
 
 	while len(dbs) > 0:
 		try:
@@ -305,11 +367,12 @@ def mpreloader(dbs, count, totaldbs):
 			dbcontents['dbname'] = ''
 
 		count.increment()
-		if count.value % 200 == 0:
-			print('\t', str(count.value), 'of', str(totaldbs), 'databases restored')
+		if count.value % progresschunks == 0:
+			percent = round((count.value / len(totaldbs)) * 100, 1)
+			print('\t {p}% of the databases have been restored ({a}/{b})'.format(p=percent, a=count.value, b=totaldbs))
 
 		if dbcontents['dbname'] != '':
-			reloadwhoeldb(dbcontents)
+			reloadwhoeldb(dbcontents, dbconnection)
 			# unnestreloader(dbcontents)
 
 	return
