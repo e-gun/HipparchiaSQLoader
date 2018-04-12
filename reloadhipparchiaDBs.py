@@ -103,7 +103,7 @@ def reloadwhoeldb(dbcontents, dbconnection):
 	dbcursor = dbconnection.cursor()
 
 	# there are tabs in the greek dictionary: you can't use '\t' as the separator
-	# similarly you can't use a high-value junk separator because you are not allowd to use that many bits...
+	# similarly you can't use a high-value junk separator because you are not allowed to use that many bits...
 	separator = chr(7)
 
 	table = dbcontents['dbname']
@@ -120,7 +120,7 @@ def reloadwhoeldb(dbcontents, dbconnection):
 	# [c] authors and works
 	#   psycopg2.DataError: invalid input syntax for integer: "None"
 	#   CONTEXT:  COPY works, line 1, column converted_date: "None"
-	# [d] unclear why ATM, but latin_dictionary will be empty...
+	# [d] unclear why ATM, but latin_dictionary will turn up empty...
 
 	tests = ['lemmata', 'morphology', 'authors', 'works', 'latin_dictionary']
 	avoidcopyfrom = [t for t in tests if t in table]
@@ -279,7 +279,7 @@ def recursivereload(datadir):
 	dbc.commit()
 
 	print('beginning to reload the tables: {d} found'.format(d=totaldbs))
-	print('[NB: the lengths vary considerably; not every 10% chunk will load as swiftly as did its peers...]')
+	print('[NB: the lengths vary considerably; not every 10% chunk will load as swiftly/slowly as did its peers...]')
 	manager = Manager()
 	count = MPCounter()
 	dbs = manager.list(dbpaths)
@@ -287,8 +287,7 @@ def recursivereload(datadir):
 
 	connections = {i: setconnection(autocommit=True) for i in range(workers)}
 
-	jobs = [Process(target=mpreloader, args=(dbs, count, totaldbs, connections[i])) for i in
-			range(workers)]
+	jobs = [Process(target=mpreloader, args=(dbs, count, totaldbs, connections[i])) for i in range(workers)]
 
 	for j in jobs:
 		j.start()
