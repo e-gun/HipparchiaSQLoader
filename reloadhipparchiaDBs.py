@@ -82,36 +82,6 @@ def resetdb(tablename, templatetablename, templatefilename, cursor):
 	return
 
 
-def xreloadwhoeldb(dbcontents, dbconnection):
-	"""
-	the pickle package itself should tell you all you need to know to call reloadoneline() repeatedly
-	note that the dbname is stored in the file and need not be derived from the filename itself
-	:param dbcontents:
-	:return:
-	"""
-
-	cur = dbconnection.cursor()
-
-
-	dbname = dbcontents['dbname']
-	structure = dbcontents['structure']
-	data = dbcontents['data']
-
-	count = 0
-	for line in data:
-		count += 1
-		# 32k is the limit?
-		if count % 5000 == 0:
-			dbconnection.commit()
-		if count % 50000 == 0:
-			print('\t\tlongdb: ', dbname, '[ @ line ', count, ']')
-		reloadoneline(line, dbname, structure, cur)
-
-	dbconnection.commit()
-
-	return
-
-
 def reloadwhoeldb(dbcontents, dbconnection):
 	"""
 	the pickle package itself should tell you all you need to know to call reloadoneline() repeatedly
@@ -163,89 +133,6 @@ def generatecopystream(queryvaluetuples, separator='\t'):
 	copystream.seek(0)
 
 	return copystream
-
-
-def unnestreloader(dbcontents):
-	"""
-
-	https://trvrm.github.io/bulk-psycopg2-inserts.html
-
-	not working yet....
-
-	File "./reloadhipparchiaDBs.py", line 149, in unnestreloader
-	splitdata[i] = [d[i] for d in data]
-	IndexError: list assignment index out of range
-
-	:param dbcontents:
-	:return:
-	"""
-
-	dbc = setconnection(config)
-	cur = dbc.cursor()
-
-	dbname = dbcontents['dbname']
-	structure = dbcontents['structure']
-	data = dbcontents['data']
-
-	columns = len(structure)
-	structure = [s[0] for s in structure]
-	structure = ', '.join(structure)
-
-	query = '''
-		INSERT INTO {db} ({s})
-		SELECT {un}
-	'''
-
-	unnester = list()
-	for i in range(columns):
-		unnester.append('unnest ( %({var}[i])s )'.format(var='splitdata', i=i))
-	unnester = ', '.join(unnester)
-
-	query = query.format(db=dbname, s=structure, un=unnester)
-
-	splitdata = list()
-	for i in range(columns):
-		splitdata[i] = [d[i] for d in data]
-
-	data = tuple([splitdata[i] for i in range(columns)])
-
-	cur.execute(query, data)
-
-	dbc.commit()
-	del dbc
-
-	return
-
-
-def reloadoneline(insertdata, dbname, dbstructurelist, cursor):
-	"""
-	restore everything to a db
-	remember that the db itself should have pickled it structure
-	and the values that came out then should still be tuples now
-	:param dbname:
-	:param cursor:
-	:return:
-	"""
-
-	insertstring = ' ('
-	insertvals = '('
-	for label in dbstructurelist:
-		insertstring += label[0] + ', '
-		insertvals += '%s, '
-
-	insertstring = insertstring[:-2] + ')'
-	insertvals = insertvals[:-2] + ')'
-
-	q = 'INSERT INTO ' + dbname + insertstring + ' VALUES ' + insertvals
-	d = insertdata
-
-	try:
-		cursor.execute(q, d)
-	except psycopg2.DatabaseError as e:
-		print('insert into ', dbname, 'failed at while attempting', d)
-		print('Error %s' % e)
-
-	return
 
 
 def buildfilesearchlist(datadir, memory):
@@ -356,7 +243,7 @@ def mpreloader(dbs, count, totaldbs, dbconnection):
 	:return:
 	"""
 
-	progresschunks = int(len(totaldbs) / 10)
+	progresschunks = int(totaldbs / 10)
 
 	while len(dbs) > 0:
 		try:
@@ -368,7 +255,7 @@ def mpreloader(dbs, count, totaldbs, dbconnection):
 
 		count.increment()
 		if count.value % progresschunks == 0:
-			percent = round((count.value / len(totaldbs)) * 100, 1)
+			percent = round((count.value / totaldbs) * 100, 1)
 			print('\t {p}% of the databases have been restored ({a}/{b})'.format(p=percent, a=count.value, b=totaldbs))
 
 		if dbcontents['dbname'] != '':
