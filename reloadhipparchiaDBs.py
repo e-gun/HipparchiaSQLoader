@@ -273,7 +273,7 @@ def recursivereload(datadir):
 		elif re.search(authorfinder, nm):
 			resetdb(nm, 'gr0001', schemadir+'gr0001_schema.sql', cur)
 		if count % 500 == 0:
-			print(count, 'dbs reset')
+			print('\t{c} tables reset'.format(c=count))
 			dbc.commit()
 	dbc.commit()
 
