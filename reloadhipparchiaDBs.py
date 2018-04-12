@@ -120,8 +120,9 @@ def reloadwhoeldb(dbcontents, dbconnection):
 	# [c] authors and works
 	#   psycopg2.DataError: invalid input syntax for integer: "None"
 	#   CONTEXT:  COPY works, line 1, column converted_date: "None"
+	# [d] unclear why ATM, but latin_dictionary will be empty...
 
-	tests = ['lemmata', 'morphology', 'authors', 'works']
+	tests = ['lemmata', 'morphology', 'authors', 'works', 'latin_dictionary']
 	avoidcopyfrom = [t for t in tests if t in table]
 
 	if not avoidcopyfrom:
