@@ -111,6 +111,7 @@ def reloadwhoeldb(dbcontents, dbconnection):
 	data = dbcontents['data']
 
 	# the problems
+	# [z] BSD will only reload *some* of the data...
 	# [a] *_lemmata
 	#   psycopg2.DataError: malformed array literal: "['ζῳοτύπον', 'ζωιοτύποϲ']"
 	#   DETAIL:  "[" must introduce explicitly-specified array dimensions.
