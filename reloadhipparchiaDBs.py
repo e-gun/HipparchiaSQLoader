@@ -104,7 +104,8 @@ def reloadwhoeldb(dbcontents, dbconnection):
 
 	# there are tabs in the greek dictionary: you can't use '\t' as the separator
 	# similarly you can't use a high-value junk separator because you are not allowed to use that many bits...
-	separator = chr(7)
+	# 7 = BEL (bell); 30 = RS (record separator)
+	separator = chr(30)
 
 	table = dbcontents['dbname']
 	structure = dbcontents['structure']
