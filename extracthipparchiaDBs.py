@@ -13,7 +13,7 @@ import psycopg2
 from multiprocessing import Manager, Process, freeze_support
 
 from dbhelpers import *
-from dbhelpers import MPCounter
+from dbhelpers import MPCounter, icanpickleconnections
 from workers import setworkercount
 
 config = configparser.ConfigParser()
@@ -184,7 +184,11 @@ def archiveallauthors(location, authordbstructure):
 	authors = manager.list(authorids)
 	workers = setworkercount()
 
-	connections = {i: setconnection() for i in range(workers)}
+	if icanpickleconnections():
+		connections = {i: setconnection() for i in range(workers)}
+	else:
+		# will grab a connection later
+		connections = {i: None for i in range(workers)}
 
 	print(len(authorids), 'author databases to extract')
 
@@ -196,8 +200,9 @@ def archiveallauthors(location, authordbstructure):
 	for j in jobs:
 		j.join()
 
-	for c in connections:
-		connections[c].connectioncleanup()
+	if connections[0]:
+		for c in connections:
+			connections[c].connectioncleanup()
 
 	return
 
@@ -213,6 +218,9 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 	:param authors:
 	:return:
 	"""
+
+	if not dbconnection:
+		dbconnection = setconnection()
 
 	dbcursor = dbconnection.cursor()
 	

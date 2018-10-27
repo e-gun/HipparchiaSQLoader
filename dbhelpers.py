@@ -9,14 +9,39 @@
 import configparser
 import re
 from collections import deque
-from multiprocessing import Value
+from multiprocessing import Value, Process
+from os import name as osname
 
-from connection import setconnection
+from connection import setconnection, ConnectionObject
 
 config = configparser.ConfigParser()
 config.read('config.ini')
 
 sqltemplateversion = 2242018
+
+
+def icanpickleconnections():
+	if osname == 'nt':
+		return False
+
+	if osname == 'posix':
+		return True
+
+	result = True
+	c = (ConnectionObject(),)
+	j = Process(target=type, args=c)
+
+	try:
+		j.start()
+		j.join()
+	except TypeError:
+		# can't pickle psycopg2.extensions.connection objects
+		print('to avoid seeing "EOFError: Ran out of input" messages edit "settings/networksettings.py" to read:')
+		print("\tICANPICKLECONNECTIONS = 'n'\n")
+		result = False
+	c[0].connectioncleanup()
+
+	return result
 
 
 def templatetest():
