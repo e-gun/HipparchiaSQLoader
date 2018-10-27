@@ -10,7 +10,7 @@ import gzip
 import os
 import pickle
 import psycopg2
-from multiprocessing import Manager, Process
+from multiprocessing import Manager, Process, freeze_support
 
 from dbhelpers import *
 from dbhelpers import MPCounter
@@ -246,13 +246,15 @@ def mpauthorarchiver(count, location, intermediatedir, authordbstructure, author
 	return
 
 
-testresults = templatetest()
-if 0 in testresults:
-	print('aborting:', testresults[0], 'is not a DB version I can extract')
-else:
-	print('archiving support dbs')
-	archivesupportdbs(datadir)
+if __name__ == '__main__':
+	freeze_support()
+	testresults = templatetest()
+	if 0 in testresults:
+		print('aborting:', testresults[0], 'is not a DB version I can extract')
+	else:
+		print('archiving support dbs')
+		archivesupportdbs(datadir)
 
-	print('archiving individual authorfiles')
-	strindividual_authorfile = loadcolumnsfromfile(schemadir+'gr0001_schema.sql')
-	archiveallauthors(datadir, strindividual_authorfile)
+		print('archiving individual authorfiles')
+		strindividual_authorfile = loadcolumnsfromfile(schemadir+'gr0001_schema.sql')
+		archiveallauthors(datadir, strindividual_authorfile)
