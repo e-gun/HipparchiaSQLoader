@@ -9,6 +9,7 @@
 import gzip
 import os
 import pickle
+import psycopg2
 from multiprocessing import Manager, Process
 
 from dbhelpers import *
@@ -38,8 +39,11 @@ def fetchit(dbname, dbstructurelist, cursor):
 	selectstring = ','.join(selectlist)
 	
 	q = 'SELECT {s} FROM {d}'.format(s=selectstring, d=dbname)
-	cursor.execute(q)
-	results = cursor.fetchall()
+	try:
+		cursor.execute(q)
+		results = cursor.fetchall()
+	except psycopg2.ProgrammingError:
+		results = None
 
 	return results
 
@@ -116,8 +120,9 @@ def archivesupportdbs(location):
 	for db in dbs:
 		dbcontents = fetchit(db, dbs[db], dbcursor)
 		dbconnection.commit()
-		pickleddb = pickleprep(db, dbs[db], dbcontents)
-		storeit(location+intermediatedir+db+suffix, pickleddb)
+		if dbcontents:
+			pickleddb = pickleprep(db, dbs[db], dbcontents)
+			storeit(location+intermediatedir+db+suffix, pickleddb)
 
 	dbconnection.connectioncleanup()
 	
