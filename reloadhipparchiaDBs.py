@@ -289,7 +289,11 @@ def recursivereload(datadir):
 	dbs = manager.list(dbpaths)
 	workers = int(config['io']['workers'])
 
-	connections = {i: setconnection(autocommit=True) for i in range(workers)}
+	if icanpickleconnections():
+		connections = {i: setconnection() for i in range(workers)}
+	else:
+		# will grab a connection later
+		connections = {i: None for i in range(workers)}
 
 	jobs = [Process(target=mpreloader, args=(dbs, count, totaldbs, connections[i])) for i in range(workers)]
 
@@ -298,8 +302,9 @@ def recursivereload(datadir):
 	for j in jobs:
 		j.join()
 
-	for c in connections:
-		connections[c].connectioncleanup()
+	if connections[0]:
+		for c in connections:
+			connections[c].connectioncleanup()
 
 	return
 
@@ -309,6 +314,9 @@ def mpreloader(dbs, count, totaldbs, dbconnection):
 	mp reader reloader
 	:return:
 	"""
+
+	if not dbconnection:
+		dbconnection = setconnection()
 
 	progresschunks = int(totaldbs / 10)
 
