@@ -10,7 +10,7 @@ import gzip
 import io
 import os
 import pickle
-from multiprocessing import Manager, Process
+from multiprocessing import Manager, Process, freeze_support
 
 import psycopg2
 
@@ -340,26 +340,29 @@ def mpreloader(dbs, count, totaldbs, dbconnection):
 	return
 
 
-print('\n *** WARNING ***\n')
-print('You are about to completely erase any currently installed data\n')
-print('If "{d}" does not contain a full set of datafiles, HipparchiaServer will be sad and refuse to work properly, if at all.\n'.format(d=datadir))
-areyousure = input('Type "YES" if you are sure you want to do this: ')
+if __name__ == '__main__':
+	freeze_support()
 
-# everything
+	print('\n *** WARNING ***\n')
+	print('You are about to completely erase any currently installed data\n')
+	print('If "{d}" does not contain a full set of datafiles, HipparchiaServer will be sad and refuse to work properly, if at all.\n'.format(d=datadir))
+	areyousure = input('Type "YES" if you are sure you want to do this: ')
 
-if areyousure == 'YES':
-	# print('nuking')
-	recursivereload(datadir)
-else:
-	print()
-	print('"{x}" is not "YES"'.format(x=areyousure))
-	print('Aborting. Current installation unmodified')
+	# everything
 
-# support only
-# recursivereload(datadir+'/supportdbs/')
+	if areyousure == 'YES':
+		# print('nuking')
+		recursivereload(datadir)
+	else:
+		print()
+		print('"{x}" is not "YES"'.format(x=areyousure))
+		print('Aborting. Current installation unmodified')
 
-# gk only
-# recursivereload(datadir+'/workdbs/greekauthors/')
+	# support only
+	# recursivereload(datadir+'/supportdbs/')
 
-# lt only
-# recursivereload(datadir+'/workdbs/latinauthors/')
+	# gk only
+	# recursivereload(datadir+'/workdbs/greekauthors/')
+
+	# lt only
+	# recursivereload(datadir+'/workdbs/latinauthors/')
