@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.3
--- Dumped by pg_dump version 10.3
+-- Dumped from database version 11.2
+-- Dumped by pg_dump version 11.2
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -15,7 +15,6 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
-DROP TABLE public.builderversion;
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -27,7 +26,8 @@ SET default_with_oids = false;
 CREATE TABLE public.builderversion (
     templateversion integer,
     corpusname character varying(2),
-    corpusbuilddate character varying(20)
+    corpusbuilddate character varying(64),
+    buildoptions character varying(512)
 );
 
 
@@ -43,4 +43,3 @@ GRANT SELECT ON TABLE public.builderversion TO hippa_rd;
 --
 -- PostgreSQL database dump complete
 --
-
