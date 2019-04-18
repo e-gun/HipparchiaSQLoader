@@ -33,3 +33,8 @@ current dump size for 5 corpora and support data:
     % ./extracthipparchiaDBs.py
     
 ```
+
+Little or no little editing of `config.ini` is required to load or extract a working set of data. You can get away with zero edits if you position the raw data in the default location
+(i.e., in a subfolder named `sqldump` under `../HipparchiaData/`). 
+
+If you do not know where/how to find `../HipparchiaData/` or `~/hipparchia_venv/HipparchiaData/`, you might have problems. You will need to learn the basics of how to read and edit file path names so that you know where to put/find things.
