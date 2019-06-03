@@ -52,7 +52,7 @@ def resetdb(tablename, templatetablename, templatefilename, cursor):
 	"""
 
 	querylines = loadschemafromfile(tablename, templatetablename, templatefilename)
-	querylines = [q for q in querylines if q and re.search(r'^--',q) is None]
+	querylines = [q for q in querylines if q and re.search(r'^--', q) is None]
 	querylines = [re.sub(r'(ALTER|DROP) (TABLE|INDEX) ', r'\1 \2 IF EXISTS ', q) for q in querylines]
 
 	corequery = [q for q in querylines
