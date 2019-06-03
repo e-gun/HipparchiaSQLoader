@@ -51,8 +51,7 @@ ALTER TABLE public.gr0001 OWNER TO hippa_wr;
 -- Name: gr0001 gr0001_index_key; Type: CONSTRAINT; Schema: public; Owner: hippa_wr
 --
 
-ALTER TABLE ONLY public.gr0001
-    ADD CONSTRAINT gr0001_index_key UNIQUE (index);
+ALTER TABLE ONLY public.gr0001 ADD CONSTRAINT gr0001_index_key UNIQUE (index);
 
 
 --
