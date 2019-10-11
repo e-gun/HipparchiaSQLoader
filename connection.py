@@ -241,7 +241,8 @@ class PooledConnectionObject(GenericConnectionObject):
 			self.setdefaultisolation()
 		except:
 			# Ubuntu does not like this
-			# psycopg2.OperationalError: SSL error: decryption failed or bad record mac
+			# [a] psycopg2.OperationalError: SSL error: decryption failed or bad record mac
+			# [b] psycopg2.InterfaceError: connection already closed
 			pass
 		self.pool.putconn(self.dbconnection, key=self.uniquename)
 		# print('connection returned to pool:', self.uniquename)
