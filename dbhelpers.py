@@ -17,7 +17,7 @@ from connection import setconnection, ConnectionObject
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-sqltemplateversion = 2242018
+sqltemplateversion = 10082019
 
 
 def icanpickleconnections():
