@@ -238,11 +238,11 @@ class PooledConnectionObject(GenericConnectionObject):
 		self.commit()
 		try:
 			self.dbconnection.set_session(readonly=False)
+			self.setdefaultisolation()
 		except:
 			# Ubuntu does not like this
 			# psycopg2.OperationalError: SSL error: decryption failed or bad record mac
 			pass
-		self.setdefaultisolation()
 		self.pool.putconn(self.dbconnection, key=self.uniquename)
 		# print('connection returned to pool:', self.uniquename)
 
