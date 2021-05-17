@@ -30,8 +30,6 @@ def icanpickleconnections():
 		j.join()
 	except TypeError:
 		# can't pickle psycopg2.extensions.connection objects
-		print('to avoid seeing "EOFError: Ran out of input" messages edit "settings/networksettings.py" to read:')
-		print("\tICANPICKLECONNECTIONS = 'n'\n")
 		result = False
 	c[0].connectioncleanup()
 
