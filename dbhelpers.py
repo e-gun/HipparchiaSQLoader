@@ -21,12 +21,6 @@ sqltemplateversion = 10082019
 
 
 def icanpickleconnections():
-	if osname == 'nt':
-		return False
-
-	if osname == 'posix':
-		return True
-
 	result = True
 	c = (ConnectionObject(),)
 	j = Process(target=type, args=c)
